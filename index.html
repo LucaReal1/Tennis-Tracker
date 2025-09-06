@@ -10,11 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script type="module">
-        // Firebase and Firestore imports
+        // Firebase and Realtime Database imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, set, get, child } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -24,17 +23,14 @@
             storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
             messagingSenderId: "677749560869",
             appId: "1:677749560869:web:c39cea9900805fd97851cc",
-            measurementId: "G-VSBCC91SW8"
+            databaseURL: "https://tennis-tracker-7eff9-default-rtdb.firebaseio.com/"
         };
         
         // Using a simpler, top-level collection for your own Firebase project.
-        const collectionPath = "tennisRounds";
+        const databasePath = "tennisRounds";
 
         let db, auth, userId;
         let unsubscribeMatchData;
-
-        // Set Firebase log level for debugging
-        setLogLevel('debug');
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -47,23 +43,39 @@
             if (spinner) spinner.style.display = 'none';
         };
         
-        // Function to create an initial round
-        const createNewRound = async () => {
+        // Function to create or reset the first round
+        const createFirstRound = async () => {
             showLoadingSpinner();
-            const roundsCollectionRef = collection(db, collectionPath);
             try {
-                const querySnapshot = await getDocs(roundsCollectionRef);
-                if (querySnapshot.empty) {
-                    const newRoundRef = doc(roundsCollectionRef, "Round 1");
-                    const initialMatches = [
-                        { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
-                        { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
-                    ];
-                    await setDoc(newRoundRef, { name: "Round 1", matches: initialMatches });
-                    console.log("Initial 'Round 1' created successfully!");
-                } else {
-                    console.log("A round already exists. No new round created.");
-                }
+                const initialMatches = [
+                    { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
+                    { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
+                ];
+                await set(ref(db, `${databasePath}/Round 1`), { matches: initialMatches });
+                console.log("Initial 'Round 1' created successfully!");
+            } catch (e) {
+                console.error("Error creating new round:", e);
+            } finally {
+                hideLoadingSpinner();
+            }
+        };
+
+        // Function to add a new, subsequent round
+        const addNewRound = async () => {
+            showLoadingSpinner();
+            try {
+                const snapshot = await get(ref(db, databasePath));
+                const rounds = snapshot.val() || {};
+                const nextRoundNumber = Object.keys(rounds).length + 1;
+                const newRoundName = `Round ${nextRoundNumber}`;
+                
+                const initialMatches = [
+                    { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
+                    { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
+                ];
+                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: initialMatches });
+                console.log(`'${newRoundName}' created successfully!`);
+
             } catch (e) {
                 console.error("Error creating new round:", e);
             } finally {
@@ -74,12 +86,11 @@
         const initializeFirebase = async () => {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
-            db = getFirestore(app);
+            db = getDatabase(app);
 
             showLoadingSpinner(); // Show spinner on initial load
 
             try {
-                // We've removed the custom token logic and are using anonymous sign-in.
                 await signInAnonymously(auth);
                 userId = auth.currentUser.uid;
                 document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
@@ -93,22 +104,35 @@
             // Add event listener for the create new round button
             const createRoundBtn = document.getElementById('createRoundBtn');
             if (createRoundBtn) {
-                createRoundBtn.addEventListener('click', createNewRound);
+                createRoundBtn.addEventListener('click', createFirstRound);
             }
 
-            // Set up a listener for the rounds data from Firestore
-            const roundsCollectionRef = collection(db, collectionPath);
-            onSnapshot(roundsCollectionRef, (querySnapshot) => {
-                const rounds = [];
-                querySnapshot.forEach((doc) => {
-                    rounds.push({ id: doc.id, name: doc.data().name });
-                });
-                populateTabs(rounds);
-                // Select the first tab by default
-                if (rounds.length > 0) {
-                    showTab(`tab-${rounds[0].id}`);
+            // Add event listener for the add new round button
+            const addNewRoundBtn = document.getElementById('addNewRoundBtn');
+            if (addNewRoundBtn) {
+                addNewRoundBtn.addEventListener('click', addNewRound);
+            }
+
+            // Set up a listener for the rounds data from Realtime Database
+            onValue(ref(db, databasePath), (snapshot) => {
+                const rounds = snapshot.val() || {};
+                const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key }));
+
+                const createRoundContainer = document.getElementById('createRoundContainer');
+                const addNewRoundContainer = document.getElementById('addNewRoundContainer');
+
+                if (roundsArray.length > 0) {
+                    createRoundContainer.style.display = 'none';
+                    addNewRoundContainer.style.display = 'block';
+                    populateTabs(roundsArray);
+                    showTab(`tab-${roundsArray[0].id}`);
+                } else {
+                    createRoundContainer.style.display = 'block';
+                    addNewRoundContainer.style.display = 'none';
+                    document.getElementById('tabList').innerHTML = '';
+                    document.getElementById('tabPanelsContainer').innerHTML = '';
                 }
-                // Hide the spinner after this check, regardless of whether rounds were found.
+
                 hideLoadingSpinner();
             }, (error) => {
                 console.error("Error fetching rounds:", error);
@@ -184,10 +208,11 @@
                 unsubscribeMatchData();
             }
 
-            const roundDocRef = doc(db, collectionPath, roundId);
-            unsubscribeMatchData = onSnapshot(roundDocRef, (docSnap) => {
-                if (docSnap.exists() && docSnap.data().matches) {
-                    const matches = docSnap.data().matches;
+            const roundRef = ref(db, `${databasePath}/${roundId}`);
+            unsubscribeMatchData = onValue(roundRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.matches) {
+                    const matches = data.matches;
                     const tableBody = document.querySelector(`#matchDataTable-${roundId} tbody`);
                     tableBody.innerHTML = '';
                     matches.forEach(match => {
@@ -202,15 +227,13 @@
                         tableBody.appendChild(row);
                     });
                     
-                    const data = processMatchData(matches);
-                    populateLeaderboard(data);
-                    renderCharts(data);
+                    const processedData = processMatchData(matches);
+                    populateLeaderboard(processedData);
+                    renderCharts(processedData);
                 }
-                // Moved hideLoadingSpinner here to ensure it is always called
                 hideLoadingSpinner();
             }, (error) => {
                 console.error("Error fetching match data:", error);
-                // Also hide spinner on error
                 hideLoadingSpinner();
             });
         };
@@ -233,11 +256,10 @@
             });
 
             try {
-                const roundDocRef = doc(db, collectionPath, roundId);
-                await setDoc(roundDocRef, { matches }, { merge: true });
-                console.log("Match data saved to Firestore!");
+                await set(ref(db, `${databasePath}/${roundId}/matches`), matches);
+                console.log("Match data saved to Realtime Database!");
             } catch (e) {
-                console.error("Error writing document: ", e);
+                console.error("Error writing data: ", e);
             }
         };
 
@@ -414,8 +436,15 @@
                 </button>
             </div>
 
+            <!-- New button to add subsequent rounds -->
+            <div id="addNewRoundContainer" class="text-center my-6" style="display: none;">
+                <button id="addNewRoundBtn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-700 transition duration-300">
+                    Add a New Round
+                </button>
+            </div>
+
             <!-- Tab Buttons -->
-            <div role="tablist" class="flex flex-col sm:flex-row gap-2 border-b-2 border-gray-200 mb-6">
+            <div id="tabList" role="tablist" class="flex flex-col sm:flex-row gap-2 border-b-2 border-gray-200 mb-6">
                 <!-- Tab buttons populated by JavaScript -->
             </div>
 
