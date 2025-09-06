@@ -72,7 +72,7 @@
                 if (rounds.length > 0) {
                     showTab(`tab-${rounds[0].id}`);
                 }
-                hideLoadingSpinner(); // Hide spinner after initial tabs are loaded
+                // NOTE: The loading spinner will now be hidden inside updateInfographic
             }, (error) => {
                 console.error("Error fetching rounds:", error);
                 hideLoadingSpinner();
