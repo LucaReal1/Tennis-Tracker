@@ -9,10 +9,196 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-7xl overflow-hidden flex flex-col lg:flex-row">
+        
+        <!-- Tab Navigation and Controls -->
+        <div class="p-8 lg:p-12 w-full lg:w-1/3 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-3xl lg:text-4xl font-extrabold text-blue-800">League Stats</h1>
+                </div>
+
+                <!-- User ID and Loading Status -->
+                <div class="mb-6 text-sm text-gray-500 flex items-center space-x-2">
+                    <svg id="loadingIndicator" class="animate-spin h-5 w-5 text-blue-500 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="userIdDisplay" class="truncate"></span>
+                </div>
+                
+                <!-- Temporary Message Box -->
+                <div id="messageBox" class="hidden"></div>
+                
+                <!-- Main Controls -->
+                <div id="createRoundContainer" class="flex flex-col items-start gap-4 hidden">
+                    <p class="text-gray-600 mb-2">No rounds found. Let's start a new one!</p>
+                    <button id="createRoundBtn" class="w-full flex justify-center items-center gap-2 bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-blue-600 active:scale-95 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                        </svg>
+                        Create New Round
+                    </button>
+                </div>
+                
+                <div id="addNewRoundContainer" class="flex flex-col items-start gap-4 hidden">
+                    <button id="addNewRoundBtn" class="w-full flex justify-center items-center gap-2 bg-green-500 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-green-600 active:scale-95 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                        </svg>
+                        Add a New Round
+                    </button>
+                </div>
+                
+                <!-- Tab List -->
+                <div role="tablist" aria-label="League Rounds" class="flex flex-col items-start space-y-2 mt-8" id="tabList">
+                    <!-- Tabs will be populated here -->
+                </div>
+            </div>
+            
+            <p class="text-xs text-gray-400 mt-8">Your app ID: <span class="font-mono" id="appIdDisplay"></span></p>
+        </div>
+
+        <!-- Tab Panels and Statistics Display -->
+        <div class="p-8 lg:p-12 w-full lg:w-2/3 bg-gray-50 overflow-y-auto">
+            <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Match Data & Statistics</h2>
+
+            <div id="tabPanelsContainer" class="space-y-8">
+                <!-- Tab panels will be populated here -->
+            </div>
+            
+            <!-- Overall Stats Section -->
+            <div class="mt-12 space-y-8">
+                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Overall Statistics</h2>
+                
+                <!-- Leaderboard Table -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Leaderboard</h3>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Games Played</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point Diff</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Leaderboard rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- New Stats Sections -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Most Dominant Win Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Most Dominant Win</h3>
+                        <div id="mostDominantWinContainer" class="flex flex-col items-center">
+                            <!-- Content populated by JS -->
+                        </div>
+                    </div>
+                
+                    <!-- Head-to-Head Records Table -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Head-to-Head Records</h3>
+                        <div id="headToHeadContainer" class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 1</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 2</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P1 Wins</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P2 Wins</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="headToHeadBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Head-to-head data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Section -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance Charts</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Win/Loss Record</h4>
+                            <div class="h-64">
+                                <canvas id="winLossChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Total Games Played</h4>
+                            <div class="h-64">
+                                <canvas id="gamesPlayedChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Point Differential</h4>
+                            <div class="h-64">
+                                <canvas id="pointDifferentialChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Average Score per Game</h4>
+                            <div class="h-64">
+                                <canvas id="averageScoreChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Player Count Modal -->
+    <div id="playerCountModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-xl font-bold mb-4">Create a New Round</h3>
+            <p class="text-gray-600 mb-6">How many players are in this league?</p>
+            <input type="number" id="playerCountInput" placeholder="e.g. 4" class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancelMatchesBtn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-gray-300">Cancel</button>
+                <button id="generateMatchesBtn" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-blue-600">Generate</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal for Delete -->
+    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Confirm Deletion</h3>
+            <p id="confirmText" class="text-gray-600 mb-6">Are you sure you want to delete this round? This action cannot be undone.</p>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="cancelDeleteBtn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-gray-300">Cancel</button>
+                <button id="confirmDeleteBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-red-600">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Firebase and Realtime Database imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
         // Your Firebase configuration
@@ -25,7 +211,7 @@
           appId: "1:677749560869:web:c39cea9900805fd97851cc"
         };
         
-        // Use a static appId and remove Canvas-specific variables
+        // Use a static appId for this application.
         const appId = firebaseConfig.projectId;
         const sanitizedAppId = appId.replace(/[.#$\[\]]/g, '_');
 
@@ -274,6 +460,7 @@
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getDatabase(app);
+            document.getElementById('appIdDisplay').innerText = sanitizedAppId;
 
             showLoadingSpinner();
 
@@ -454,7 +641,7 @@
                 if (tableBody) tableBody.innerHTML = '';
                 if (data && data.matches) {
                     const matches = data.matches;
-                    matches.forEach((match, index) => {
+                    matches.forEach((match) => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
@@ -467,14 +654,18 @@
                     });
                     
                     const processedData = processMatchData(matches);
-                    populateLeaderboard(processedData);
-                    renderCharts(processedData);
+                    populateLeaderboard(processedData.playerData);
+                    populateHeadToHead(processedData.headToHead);
+                    populateMostDominantWin(processedData.mostDominantWin);
+                    renderCharts(processedData.playerData);
                 } else if (tableBody) {
                     // No data, show an empty table or a message
                     const row = document.createElement('tr');
                     row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-gray-500">No matches found.</td>`;
                     tableBody.appendChild(row);
                     populateLeaderboard([]);
+                    populateHeadToHead({});
+                    populateMostDominantWin({});
                     renderCharts([]);
                 }
                 hideLoadingSpinner();
@@ -510,34 +701,63 @@
             }
         };
 
-        // --- Chart & Leaderboard Logic (Unchanged) ---
-        let winLossChart, gamesPlayedChart, pointDifferentialChart;
+        // --- Chart & Leaderboard Logic (updated) ---
+        let winLossChart, gamesPlayedChart, pointDifferentialChart, averageScoreChart;
 
         const renderCharts = (data) => {
             if (winLossChart) winLossChart.destroy();
             if (gamesPlayedChart) gamesPlayedChart.destroy();
             if (pointDifferentialChart) pointDifferentialChart.destroy();
+            if (averageScoreChart) averageScoreChart.destroy();
             
             createWinLossChart(data);
             createGamesPlayedChart(data);
             createPointDifferentialChart(data);
+            createAverageScoreChart(data);
         };
 
         const processMatchData = (matches) => {
             const players = {};
+            const headToHead = {};
+            let mostDominantWin = null;
+
             matches.forEach(match => {
                 const { playerA, scoreA, scoreB, playerB } = match;
 
                 if (!players[playerA]) players[playerA] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
                 if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
 
-                if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
-                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
+                // Head-to-Head tracking
+                const key = [playerA, playerB].sort().join(' vs ');
+                if (!headToHead[key]) headToHead[key] = { playerA: playerA, playerB: playerB, winsA: 0, winsB: 0 };
 
+                // Update wins and losses
+                if (scoreA > scoreB) { 
+                    players[playerA].wins++; 
+                    players[playerB].losses++; 
+                    if (headToHead[key].playerA === playerA) headToHead[key].winsA++; else headToHead[key].winsB++;
+                } else if (scoreB > scoreA) { 
+                    players[playerB].wins++; 
+                    players[playerA].losses++; 
+                    if (headToHead[key].playerB === playerB) headToHead[key].winsB++; else headToHead[key].winsA++;
+                }
+
+                // Update points
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
                 players[playerB].pointsScored += scoreB;
                 players[playerB].pointsAgainst += scoreA;
+
+                // Check for most dominant win
+                const pointDifference = Math.abs(scoreA - scoreB);
+                if (!mostDominantWin || pointDifference > mostDominantWin.pointDifference) {
+                    mostDominantWin = {
+                        winner: scoreA > scoreB ? playerA : playerB,
+                        loser: scoreA > scoreB ? playerB : playerA,
+                        score: scoreA > scoreB ? `${scoreA}-${scoreB}` : `${scoreB}-${scoreA}`,
+                        pointDifference: pointDifference
+                    };
+                }
             });
 
             const playerData = Object.keys(players).map(name => {
@@ -545,13 +765,16 @@
                 const gamesPlayed = player.wins + player.losses;
                 const winPercentage = gamesPlayed > 0 ? (player.wins / gamesPlayed) * 100 : 0;
                 const pointDifferential = player.pointsScored - player.pointsAgainst;
-                return { name, wins: player.wins, losses: player.losses, gamesPlayed, winPercentage, pointDifferential };
+                const avgScorePerGame = gamesPlayed > 0 ? (player.pointsScored / gamesPlayed) : 0;
+                return { name, wins: player.wins, losses: player.losses, gamesPlayed, winPercentage, pointDifferential, avgScorePerGame };
             });
 
-            return playerData.sort((a, b) => {
+            playerData.sort((a, b) => {
                 if (a.wins !== b.wins) return b.wins - a.wins;
                 return b.pointDifferential - a.pointDifferential;
             });
+
+            return { playerData, headToHead, mostDominantWin };
         };
 
         const populateLeaderboard = (data) => {
@@ -566,10 +789,43 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.losses}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.gamesPlayed}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.winPercentage.toFixed(1)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.avgScorePerGame.toFixed(2)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.pointDifferential}</td>
                 `;
                 leaderboardBody.appendChild(row);
             });
+        };
+
+        const populateHeadToHead = (data) => {
+            const headToHeadBody = document.getElementById('headToHeadBody');
+            headToHeadBody.innerHTML = '';
+            
+            for (const key in data) {
+                const match = data[key];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerB}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.winsA}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.winsB}</td>
+                `;
+                headToHeadBody.appendChild(row);
+            }
+        };
+
+        const populateMostDominantWin = (data) => {
+            const container = document.getElementById('mostDominantWinContainer');
+            container.innerHTML = '';
+            if (data && data.winner) {
+                container.innerHTML = `
+                    <p class="text-3xl font-bold text-blue-500 mb-1">${data.winner}</p>
+                    <p class="text-gray-600 mb-2">Defeated ${data.loser}</p>
+                    <p class="text-xl font-semibold text-gray-800">${data.score}</p>
+                    <p class="text-sm text-gray-500 mt-2">(A difference of ${data.pointDifference} points)</p>
+                `;
+            } else {
+                container.innerHTML = `<p class="text-gray-500">No matches played yet.</p>`;
+            }
         };
 
         const createWinLossChart = (data) => {
@@ -618,172 +874,31 @@
                         borderWidth: 1
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, title: { display: true, text: 'Point Differential' } } } }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Point Difference' } } } }
             });
         };
         
-        window.addEventListener("DOMContentLoaded", initializeFirebase);
+        const createAverageScoreChart = (data) => {
+            const ctx = document.getElementById('averageScoreChart').getContext('2d');
+            averageScoreChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [{
+                        label: 'Avg Score per Game',
+                        data: data.map(p => p.avgScorePerGame),
+                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                        borderColor: 'rgba(245, 158, 11, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Average Score' } } } }
+            });
+        };
+
+        // Initialize Firebase on window load
+        window.onload = initializeFirebase;
     </script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            height: 400px;
-            max-height: 50vh;
-        }
-        [role="tab"] {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        [role="tab"][aria-selected="true"] {
-            border-bottom: 3px solid;
-            border-color: #3b82f6; /* blue-500 */
-            color: #1f2937; /* gray-800 */
-        }
-        [role="tab"] span[contenteditable="true"]:focus {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .loading-spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3b82f6;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center">
-    <header class="w-full max-w-7xl px-4 py-8 bg-white shadow-md rounded-b-lg">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-4">
-            <h1 class="text-4xl font-extrabold text-blue-600 mb-2 md:mb-0">Friends Tennis League</h1>
-            <div id="userIdDisplay" class="text-xs text-gray-400">Loading user...</div>
-        </div>
-        <div id="messageBox" class="hidden text-center"></div>
-    </header>
 
-    <main class="w-full max-w-7xl px-4 py-8 flex-grow">
-        <div id="loadingIndicator" class="hidden flex justify-center items-center py-8">
-            <div class="loading-spinner"></div>
-        </div>
-        <div id="createRoundContainer" class="hidden flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-lg text-center">
-            <h2 class="text-2xl font-bold mb-4">Start Your First Round!</h2>
-            <p class="mb-6 text-gray-500">Create a new round and generate matches for all players.</p>
-            <button id="createRoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg">
-                Create New Round
-            </button>
-        </div>
-
-        <div id="addNewRoundContainer" class="hidden">
-            <!-- Tabs for rounds -->
-            <div class="flex items-center justify-between border-b border-gray-200 mb-6">
-                <div id="tabList" role="tablist" aria-label="Rounds" class="flex flex-wrap -mb-px">
-                    <!-- Tabs will be populated here -->
-                </div>
-                <button id="addNewRoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors duration-200 shadow-md flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                    </svg>
-                    New Round
-                </button>
-            </div>
-            
-            <!-- Tab panels -->
-            <div id="tabPanelsContainer" class="space-y-6">
-                <!-- Panels will be populated here -->
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            <!-- Leaderboard Card -->
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-center">Leaderboard</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GP</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PD</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Leaderboard data will be populated here by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- Charts -->
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-center">Win/Loss Record</h2>
-                <div class="chart-container flex-grow">
-                    <canvas id="winLossChart"></canvas>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-center">Total Games Played</h2>
-                <div class="chart-container flex-grow">
-                    <canvas id="gamesPlayedChart"></canvas>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
-                <h2 class="text-xl font-bold mb-4 text-center">Point Differential</h2>
-                <div class="chart-container flex-grow">
-                    <canvas id="pointDifferentialChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal for player count -->
-    <div id="playerCountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-            <div class="text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Enter Number of Players</h3>
-                <div class="mt-2 px-7 py-3">
-                    <input type="number" id="playerCountInput" min="2" placeholder="e.g., 4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button id="generateMatchesBtn" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        Generate Matches
-                    </button>
-                    <button id="cancelMatchesBtn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal for Deletion -->
-    <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-            <div class="text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Confirm Deletion</h3>
-                <p id="confirmText" class="text-sm text-gray-500 mb-4"></p>
-                <div class="flex justify-center gap-4">
-                    <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-1/2 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                        Delete
-                    </button>
-                    <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-1/2 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
