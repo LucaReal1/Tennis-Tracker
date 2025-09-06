@@ -13,7 +13,7 @@
         // Firebase and Realtime Database imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
         // Your Firebase configuration
         const firebaseConfig = {
@@ -45,54 +45,187 @@
             const spinner = document.getElementById('loadingIndicator');
             if (spinner) spinner.style.display = 'none';
         };
+
+        // Function to show a temporary message
+        const showMessage = (message, type = 'success') => {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.innerText = message;
+            messageBox.style.display = 'block';
+            messageBox.className = `p-3 rounded-lg text-white mb-4 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        };
         
-        // Function to create or reset the first round
-        const createFirstRound = async () => {
-            console.log("Attempting to create the first round...");
-            showLoadingSpinner();
-            try {
-                if (!db) {
-                    console.error("Firebase database (db) is not initialized.");
-                    return;
-                }
-                const initialMatches = [
-                    { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
-                    { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
-                ];
-                await set(ref(db, `${databasePath}/Round 1`), { matches: initialMatches });
-                console.log("Initial 'Round 1' created successfully!");
-            } catch (e) {
-                console.error("Error creating new round:", e);
-            } finally {
-                hideLoadingSpinner();
-            }
+        // Modal functions
+        const showPlayerCountModal = () => {
+            const modal = document.getElementById('playerCountModal');
+            modal.classList.remove('hidden');
         };
 
-        // Function to add a new, subsequent round
-        const addNewRound = async () => {
-            console.log("Attempting to add a new round...");
+        const hidePlayerCountModal = () => {
+            const modal = document.getElementById('playerCountModal');
+            modal.classList.add('hidden');
+        };
+
+        // Fisher-Yates shuffle algorithm
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        };
+
+        // Function to generate and save matches based on player count
+        const generateAndSaveMatches = async (isFirstRound = false) => {
+            const playerCountInput = document.getElementById('playerCountInput');
+            const playerCount = parseInt(playerCountInput.value, 10);
+            hidePlayerCountModal();
+
+            if (isNaN(playerCount) || playerCount < 2) {
+                showMessage("Please enter a valid number of players (2 or more).", "error");
+                return;
+            }
+
+            console.log("Generating matches for " + playerCount + " players.");
             showLoadingSpinner();
+
             try {
                 if (!db) {
                     console.error("Firebase database (db) is not initialized.");
                     return;
                 }
+
+                // Create an array of player names
+                const players = Array.from({ length: playerCount }, (_, i) => `Player ${i + 1}`);
+
+                // Generate all unique pairings
+                const newMatches = [];
+                for (let i = 0; i < players.length; i++) {
+                    for (let j = i + 1; j < players.length; j++) {
+                        newMatches.push({
+                            playerA: players[i],
+                            scoreA: 0,
+                            scoreB: 0,
+                            playerB: players[j]
+                        });
+                    }
+                }
+                
+                // Shuffle the matches to randomize the order
+                const shuffledMatches = shuffleArray(newMatches);
+
                 const snapshot = await get(ref(db, databasePath));
                 const rounds = snapshot.val() || {};
                 const nextRoundNumber = Object.keys(rounds).length + 1;
                 const newRoundName = `Round ${nextRoundNumber}`;
                 
-                const initialMatches = [
-                    { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
-                    { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
-                ];
-                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: initialMatches });
-                console.log(`'${newRoundName}' created successfully!`);
+                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: shuffledMatches });
+                console.log(`'${newRoundName}' created with generated matches!`);
+                showMessage(`New round created with all ${newMatches.length} matches!`, "success");
 
             } catch (e) {
-                console.error("Error creating new round:", e);
+                console.error("Error creating new round with generated matches:", e);
+                showMessage("Error creating round.", "error");
             } finally {
                 hideLoadingSpinner();
+            }
+        };
+
+        // Function to delete a round
+        const deleteRound = async (roundId) => {
+            if (!db) {
+                console.error("Firebase database (db) is not initialized.");
+                return;
+            }
+            // First, get all rounds to check if this is the last one
+            const snapshot = await get(ref(db, databasePath));
+            const rounds = snapshot.val() || {};
+            const roundsArray = Object.keys(rounds);
+
+            if (roundsArray.length <= 1) {
+                showMessage("You cannot delete the last round. Create a new one first.", "error");
+                return;
+            }
+
+            // Show confirmation modal
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmText = document.getElementById('confirmText');
+            confirmText.innerText = `Are you sure you want to delete "${roundId}"? This action cannot be undone.`;
+            confirmModal.classList.remove('hidden');
+
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+            // Use a one-time event listener to prevent multiple triggers
+            const onConfirm = async () => {
+                confirmModal.classList.add('hidden');
+                showLoadingSpinner();
+                try {
+                    await remove(ref(db, `${databasePath}/${roundId}`));
+                    console.log(`Successfully deleted round: ${roundId}`);
+                    showMessage(`Round "${roundId}" deleted successfully!`, "success");
+                } catch (e) {
+                    console.error("Error deleting round:", e);
+                    showMessage("Error deleting round.", "error");
+                } finally {
+                    hideLoadingSpinner();
+                    // Clean up event listeners to avoid memory leaks
+                    confirmDeleteBtn.removeEventListener('click', onConfirm);
+                    cancelDeleteBtn.removeEventListener('click', onCancel);
+                }
+            };
+
+            const onCancel = () => {
+                confirmModal.classList.add('hidden');
+                // Clean up event listeners
+                confirmDeleteBtn.removeEventListener('click', onConfirm);
+                cancelDeleteBtn.removeEventListener('click', onCancel);
+            };
+
+            confirmDeleteBtn.addEventListener('click', onConfirm);
+            cancelDeleteBtn.addEventListener('click', onCancel);
+        };
+
+        const saveRoundName = async (e) => {
+            const newName = e.target.innerText.trim();
+            const oldName = e.target.dataset.roundKey;
+
+            // Do nothing if the name is unchanged or empty
+            if (newName === oldName || newName === "") {
+                e.target.innerText = oldName; // Revert to old name if empty
+                return;
+            }
+
+            try {
+                // Fetch the existing data for the old round
+                const oldRoundRef = ref(db, `${databasePath}/${oldName}`);
+                const snapshot = await get(oldRoundRef);
+                const roundData = snapshot.val();
+
+                if (roundData) {
+                    // Check if the new name already exists
+                    const newRoundRef = ref(db, `${databasePath}/${newName}`);
+                    const newRoundSnapshot = await get(newRoundRef);
+                    if (newRoundSnapshot.exists()) {
+                        console.error("A round with this name already exists.");
+                        showMessage("A round with this name already exists. Reverting.", "error");
+                        e.target.innerText = oldName; // Revert name
+                        return;
+                    }
+
+                    // Save the data to the new key
+                    await set(newRoundRef, roundData);
+                    // Delete the old key
+                    await remove(oldRoundRef);
+                    console.log(`Successfully renamed round from '${oldName}' to '${newName}'`);
+                    showMessage("Round name updated!", "success");
+                }
+            } catch (e) {
+                console.error("Error renaming round:", e);
+                showMessage("Error renaming round.", "error");
+                e.target.innerText = oldName; // Revert on error
             }
         };
 
@@ -120,12 +253,22 @@
                     // Attach event listeners ONLY when the user is authenticated and ready.
                     const createRoundBtn = document.getElementById('createRoundBtn');
                     if (createRoundBtn) {
-                        createRoundBtn.addEventListener('click', createFirstRound);
+                        createRoundBtn.addEventListener('click', showPlayerCountModal);
                     }
         
                     const addNewRoundBtn = document.getElementById('addNewRoundBtn');
                     if (addNewRoundBtn) {
-                        addNewRoundBtn.addEventListener('click', addNewRound);
+                        addNewRoundBtn.addEventListener('click', showPlayerCountModal);
+                    }
+                    
+                    // Add listener to the modal button
+                    const generateMatchesBtn = document.getElementById('generateMatchesBtn');
+                    if(generateMatchesBtn){
+                        generateMatchesBtn.addEventListener('click', generateAndSaveMatches);
+                    }
+                    const cancelMatchesBtn = document.getElementById('cancelMatchesBtn');
+                    if(cancelMatchesBtn){
+                        cancelMatchesBtn.addEventListener('click', hidePlayerCountModal);
                     }
                     
                     // Now that we're authenticated, we can safely listen for database changes.
@@ -141,7 +284,7 @@
                             addNewRoundContainer.style.display = 'block';
                             populateTabs(roundsArray);
                             // Show the first tab after populating
-                            const firstTabId = `tab-${roundsArray[0].id.replace(' ', '-')}`;
+                            const firstTabId = `tab-${roundsArray[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
                             showTab(firstTabId);
                         } else {
                             createRoundContainer.style.display = 'block';
@@ -178,14 +321,38 @@
             tabPanels.innerHTML = '';
 
             rounds.sort((a, b) => parseInt(a.name.replace('Round ', '')) - parseInt(b.name.replace('Round ', ''))).forEach((round, index) => {
-                const sanitizedId = round.id.replace(' ', '-');
-                const tabButton = document.createElement('button');
+                const sanitizedId = round.id.replace(/[^a-zA-Z0-9]/g, '-');
+                
+                const tabButton = document.createElement('div'); // Change to div to hold button and icon
+                tabButton.className = 'flex items-center gap-2 text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2';
                 tabButton.setAttribute('role', 'tab');
                 tabButton.setAttribute('id', `tab-${sanitizedId}`);
                 tabButton.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
                 tabButton.setAttribute('aria-controls', `panel-${sanitizedId}`);
-                tabButton.className = 'text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
-                tabButton.innerText = round.name;
+
+                // Make the round name editable
+                const nameSpan = document.createElement('span');
+                nameSpan.setAttribute('contenteditable', 'true');
+                nameSpan.setAttribute('data-round-key', round.name);
+                nameSpan.innerText = round.name;
+                nameSpan.addEventListener('blur', saveRoundName);
+                nameSpan.addEventListener('click', (e) => e.stopPropagation()); // Prevent click on span from propagating to delete button
+                
+                // Add the delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                  <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.333.576L2.25 5.116A2.25 2.25 0 0 0 2 7.25v2.25A2.25 2.25 0 0 0 4.25 11.75h1.75a.75.75 0 0 1 0 1.5H4.25a.75.75 0 0 0 0 1.5h1.75a.75.75 0 0 1 0 1.5H4.25A2.25 2.25 0 0 0 2 18.25v.25c0 .414.336.75.75.75h14.5a.75.75 0 0 0 .75-.75v-.25a2.25 2.25 0 0 0-2.25-2.25H13.5a.75.75 0 0 1 0-1.5h1.75a.75.75 0 0 0 0-1.5h-1.75a.75.75 0 0 1 0-1.5h1.75A2.25 2.25 0 0 0 18 9.5v-2.25a2.25 2.25 0 0 0-.917-1.833l-1.417-.514c-.753-.301-1.538-.499-2.333-.576V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM3.75 7.5h12.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75v-1.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
+                </svg>
+                `;
+                deleteButton.title = `Delete ${round.name}`;
+                deleteButton.className = `p-1 rounded-full text-red-500 hover:text-white hover:bg-red-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`;
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Stop the tab from activating
+                    deleteRound(round.name);
+                });
+                
+                tabButton.appendChild(nameSpan);
+                tabButton.appendChild(deleteButton);
                 tabButton.addEventListener('click', () => showTab(tabButton.id));
                 tabList.appendChild(tabButton);
 
@@ -216,9 +383,9 @@
         const showTab = (tabId) => {
             const currentActiveTab = document.querySelector('[role="tab"][aria-selected="true"]');
             if (currentActiveTab) {
+                currentActiveTab.setAttribute('aria-selected', 'false');
                 const currentPanelId = currentActiveTab.getAttribute('aria-controls');
                 const currentPanel = document.getElementById(currentPanelId);
-                currentActiveTab.setAttribute('aria-selected', 'false');
                 currentPanel.classList.add('hidden');
             }
 
@@ -229,10 +396,12 @@
 
             newActiveTab.setAttribute('aria-selected', 'true');
             newPanel.classList.remove('hidden');
+            
+            // Get the actual round name from the data attribute on the span
+            const roundName = newActiveTab.querySelector('span').dataset.roundKey;
 
-            const roundId = newActiveTab.id.replace('tab-', '').replace('-', ' ');
             showLoadingSpinner(); // Show spinner when switching tabs
-            updateInfographic(roundId);
+            updateInfographic(roundName);
         };
 
         const updateInfographic = (roundId) => {
@@ -243,15 +412,15 @@
                 console.error("Firebase database (db) is not initialized for updateInfographic.");
                 return;
             }
-            const sanitizedId = roundId.replace(' ', '-');
+            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
             const roundRef = ref(db, `${databasePath}/${roundId}`);
             unsubscribeMatchData = onValue(roundRef, (snapshot) => {
                 const data = snapshot.val();
+                const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
+                if (tableBody) tableBody.innerHTML = '';
                 if (data && data.matches) {
                     const matches = data.matches;
-                    const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
-                    tableBody.innerHTML = '';
-                    matches.forEach(match => {
+                    matches.forEach((match, index) => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
@@ -260,12 +429,19 @@
                             <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerB}</td>
                         `;
                         row.addEventListener('blur', (e) => saveMatchData(roundId), true);
-                        tableBody.appendChild(row);
+                        if (tableBody) tableBody.appendChild(row);
                     });
                     
                     const processedData = processMatchData(matches);
                     populateLeaderboard(processedData);
                     renderCharts(processedData);
+                } else if (tableBody) {
+                    // No data, show an empty table or a message
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-gray-500">No matches found.</td>`;
+                    tableBody.appendChild(row);
+                    populateLeaderboard([]);
+                    renderCharts([]);
                 }
                 hideLoadingSpinner();
             }, (error) => {
@@ -275,7 +451,7 @@
         };
         
         const saveMatchData = async (roundId) => {
-            const sanitizedId = roundId.replace(' ', '-');
+            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
             const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
             const rows = tableBody.querySelectorAll('tr');
             const matches = [];
@@ -285,8 +461,8 @@
                 if (cells.length === 4) {
                     matches.push({
                         playerA: cells[0].innerText.trim(),
-                        scoreA: parseInt(cells[1].innerText, 10),
-                        scoreB: parseInt(cells[2].innerText, 10),
+                        scoreA: parseInt(cells[1].innerText, 10) || 0,
+                        scoreB: parseInt(cells[2].innerText, 10) || 0,
                         playerB: cells[3].innerText.trim()
                     });
                 }
@@ -322,7 +498,7 @@
                 if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
 
                 if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
-                else if (scoreB > scoreA) { players[playerB].wins++; players[A].losses++; }
+                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
 
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
@@ -433,6 +609,11 @@
             border-color: #3b82f6; /* blue-500 */
             color: #1f2937; /* gray-800 */
         }
+        [role="tab"] span[contenteditable="true"]:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -461,6 +642,8 @@
             <h2 class="text-2xl font-bold mb-4 text-gray-700">Edit Match Data Below</h2>
             <p class="text-gray-600 mb-6">Click on a tab to select a round. The leaderboard and charts below will update in real-time for everyone!</p>
 
+            <div id="messageBox" class="p-3 rounded-lg text-white mb-4 hidden"></div>
+            
             <div class="text-center py-4" id="loadingIndicator">
                 <div class="loading-spinner mx-auto"></div>
                 <p class="mt-2 text-gray-500">Loading data...</p>
@@ -468,34 +651,77 @@
 
             <!-- New button to create the first round -->
             <div id="createRoundContainer" class="text-center my-6">
-                <button id="createRoundBtn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
-                    Create My First Round!
+                <button id="createRoundBtn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105">
+                    Start Your First Round
                 </button>
             </div>
-
-            <!-- New button to add subsequent rounds -->
-            <div id="addNewRoundContainer" class="text-center my-6" style="display: none;">
-                <button id="addNewRoundBtn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-700 transition duration-300">
-                    Add a New Round
-                </button>
+            
+            <!-- Player Count Modal -->
+            <div id="playerCountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+                    <div class="mt-3 text-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">How Many Players?</h3>
+                        <div class="mt-2 px-7 py-3">
+                            <p class="text-sm text-gray-500">
+                                Enter the number of players for this round. The app will automatically generate all the matches for you.
+                            </p>
+                            <input type="number" id="playerCountInput" min="2" class="mt-4 w-full p-2 border-2 border-gray-300 rounded-lg text-center font-bold text-xl" placeholder="e.g., 4" />
+                        </div>
+                        <div class="items-center px-4 py-3">
+                            <button id="generateMatchesBtn" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+                                Generate Matches
+                            </button>
+                            <button id="cancelMatchesBtn" class="ml-2 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-full shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-transform transform hover:scale-105">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Tab Buttons -->
-            <div id="tabList" role="tablist" class="flex flex-col sm:flex-row gap-2 border-b-2 border-gray-200 mb-6">
-                <!-- Tab buttons populated by JavaScript -->
-            </div>
+            <!-- Tab Navigation for Rounds -->
+            <div id="addNewRoundContainer" class="hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-4">
+                    <nav class="flex overflow-x-auto space-x-2 p-2 rounded-xl bg-gray-50" role="tablist" aria-label="Rounds">
+                        <!-- Tabs will be populated by JavaScript -->
+                    </nav>
+                    <button id="addNewRoundBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:bg-green-700 transition-colors duration-200 transform hover:scale-105 flex-shrink-0">
+                        Add New Round
+                    </button>
+                </div>
 
-            <!-- Tab Panels (Tables) -->
-            <div id="tabPanelsContainer">
-                <!-- Tab panels populated by JavaScript -->
+                <!-- Tab Panels Container -->
+                <div id="tabPanelsContainer">
+                    <!-- Tab content will be populated by JavaScript -->
+                </div>
             </div>
         </div>
 
-        <!-- Leaderboard Table -->
+        <!-- Confirmation Modal -->
+        <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Are you sure?</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p id="confirmText" class="text-sm text-gray-500"></p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            Delete
+                        </button>
+                        <button id="cancelDeleteBtn" class="ml-2 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-full shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Leaderboard Section -->
         <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Official Leaderboard</h2>
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">League Leaderboard</h2>
             <div class="overflow-x-auto rounded-lg border border-gray-200">
-                <table id="leaderboardTable" class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
@@ -508,29 +734,23 @@
                         </tr>
                     </thead>
                     <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
-                        <!-- Leaderboard data will be populated here by JavaScript -->
+                        <!-- Leaderboard data will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Chart Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-2xl shadow-xl p-6">
-                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Win/Loss Ratio</h2>
-                <div class="chart-container">
+        <!-- Charts Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">Performance Analytics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="chart-container rounded-xl overflow-hidden shadow">
                     <canvas id="winLossChart"></canvas>
                 </div>
-            </div>
-            <div class="bg-white rounded-2xl shadow-xl p-6">
-                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Games Played</h2>
-                <div class="chart-container">
+                <div class="chart-container rounded-xl overflow-hidden shadow">
                     <canvas id="gamesPlayedChart"></canvas>
                 </div>
-            </div>
-            <div class="bg-white rounded-2xl shadow-xl p-6">
-                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Point Differential</h2>
-                <div class="chart-container">
+                <div class="chart-container rounded-xl overflow-hidden shadow">
                     <canvas id="pointDifferentialChart"></canvas>
                 </div>
             </div>
