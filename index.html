@@ -22,16 +22,25 @@
              transition: all 0.2s ease-in-out;
         }
 
-        /* Custom Chart.js Tooltip */
-        .chartjs-tooltip {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 0.5rem;
-            color: white;
-            padding: 8px 12px;
-            pointer-events: none;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .sortable-header {
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+        }
+        .sortable-header .sort-icon {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .sortable-header.sort-asc .sort-icon,
+        .sortable-header.sort-desc .sort-icon {
+            opacity: 1;
+        }
+        .sortable-header.sort-desc .sort-icon {
+            transform: translateY(-50%) rotate(180deg);
         }
 
          /* Scrollbar styles for a more modern look */
@@ -109,17 +118,17 @@
                 <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
                     <h3 class="text-xl font-bold text-white mb-4">League Leaderboard</h3>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full">
+                        <table class="min-w-full" id="leagueLeaderboardTable">
                             <thead>
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rank</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Player</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Wins</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Losses</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Played</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Win %</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Score</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Point Diff</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gamesPlayed">Played <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="avgScore">Avg Score <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
                                 </tr>
                             </thead>
                             <tbody id="leagueLeaderboardBody" class="divide-y divide-slate-800">
@@ -228,6 +237,8 @@
         let db, auth, userId;
         let chartInstances = {};
         let allRoundsData = [];
+        let leagueSortState = { column: 'wins', direction: 'desc' };
+        let roundSortStates = {};
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -607,8 +618,8 @@
             const getStatEntry = (playerName) => {
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
-                        wins: 0, losses: 0, gamesPlayed: 0,
-                        totalPoints: 0, pointDifferential: 0
+                        name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
+                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0
                     };
                 }
                 return playerStats[playerName];
@@ -625,6 +636,8 @@
                     statsB.gamesPlayed++;
                     statsA.totalPoints += match.scoreA;
                     statsB.totalPoints += match.scoreB;
+                    statsA.totalPointsAgainst += match.scoreB;
+                    statsB.totalPointsAgainst += match.scoreA;
                     statsA.pointDifferential += match.scoreA - match.scoreB;
                     statsB.pointDifferential += match.scoreB - match.scoreA;
                     
@@ -638,29 +651,44 @@
                 }
             });
 
+            for (const playerName in playerStats) {
+                const stats = playerStats[playerName];
+                const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
+                stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed) : 0;
+            }
+
+            let sortedPlayers = Object.values(playerStats);
+            const { column, direction } = roundSortStates[round.id] || { column: 'wins', direction: 'desc' };
+            
+            sortedPlayers.sort((a, b) => {
+                 const aVal = (column === 'name') ? a[column] : parseFloat(a[column] || 0);
+                 const bVal = (column === 'name') ? b[column] : parseFloat(b[column] || 0);
+
+                if (typeof aVal === 'string') {
+                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
+
+
             const leaderboardBody = document.getElementById(leaderboardBodyId);
             if (!leaderboardBody) return;
             leaderboardBody.innerHTML = '';
-
-            const sortedPlayers = Object.entries(playerStats).sort(([, a], [, b]) => {
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return b.pointDifferential - a.pointDifferential;
-            });
             
             if (sortedPlayers.length === 0) {
                 leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No match data for this round.</td></tr>`;
             } else {
-                sortedPlayers.forEach(([name, stats], index) => {
-                    const winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100).toFixed(1) : 0;
-                    const avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed).toFixed(1) : 0;
+                sortedPlayers.forEach((stats, index) => {
                     const row = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${stats.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${winPercentage}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${avgScore}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore.toFixed(1)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
@@ -729,20 +757,21 @@
                 addMatchBtn.onclick = () => addMatch(round.id);
 
                 const roundLeaderboardContainer = document.createElement('div');
+                const tableId = `round-leaderboard-table-${sanitizedId}`;
                 roundLeaderboardContainer.innerHTML = `
                     <h3 class="text-xl font-bold text-white mb-4">Round Leaderboard</h3>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full">
+                        <table class="min-w-full" id="${tableId}">
                            <thead class="border-b border-slate-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rank</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Player</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Wins</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Losses</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Played</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Win %</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Score</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Point Diff</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gamesPlayed">Played <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="avgScore">Avg Score <span class="sort-icon">▲</span></th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-body-${sanitizedId}" class="divide-y divide-slate-800">
@@ -756,6 +785,8 @@
                 tabPanels.appendChild(tabPanel);
                 
                 renderRoundLeaderboard(round, `leaderboard-body-${sanitizedId}`);
+                setupSorting(tableId, roundSortStates, renderRoundLeaderboard, round);
+
             });
         };
 
@@ -795,8 +826,8 @@
             const getStatEntry = (playerName) => {
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
-                        wins: 0, losses: 0, gamesPlayed: 0,
-                        totalPoints: 0, pointDifferential: 0,
+                        name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
+                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0,
                         matchHistory: []
                     };
                 }
@@ -816,6 +847,8 @@
                         statsB.gamesPlayed++;
                         statsA.totalPoints += match.scoreA;
                         statsB.totalPoints += match.scoreB;
+                        statsA.totalPointsAgainst += match.scoreB;
+                        statsB.totalPointsAgainst += match.scoreA;
                         statsA.pointDifferential += match.scoreA - match.scoreB;
                         statsB.pointDifferential += match.scoreB - match.scoreA;
                         
@@ -838,8 +871,9 @@
             let longestStreak = { player: null, streak: 0 };
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
-                stats.winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100).toFixed(1) : 0;
-                stats.avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed).toFixed(1) : 0;
+                const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
+                stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed) : 0;
                 
                 let currentStreak = 0;
                 stats.matchHistory.forEach(result => {
@@ -856,6 +890,20 @@
                     longestStreak = { player: playerName, streak: currentStreak };
                 }
             }
+            
+            let sortedPlayers = Object.values(playerStats);
+            const { column, direction } = leagueSortState;
+
+            sortedPlayers.sort((a, b) => {
+                const aVal = (column === 'name') ? a[column] : parseFloat(a[column] || 0);
+                const bVal = (column === 'name') ? b[column] : parseFloat(b[column] || 0);
+
+                if (typeof aVal === 'string') {
+                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+            });
 
             // --- Find League-Wide Stats ---
             let dominantWin = null;
@@ -874,23 +922,19 @@
             // --- Render Leaderboard ---
             const leaderboardBody = document.getElementById('leagueLeaderboardBody');
             leaderboardBody.innerHTML = '';
-            const sortedPlayers = Object.entries(playerStats).sort(([, a], [, b]) => {
-                if (b.wins !== a.wins) return b.wins - a.wins;
-                return b.pointDifferential - a.pointDifferential;
-            });
 
             if (sortedPlayers.length === 0) {
                 leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No player data available.</td></tr>`;
             } else {
-                sortedPlayers.forEach(([name, stats], index) => {
+                sortedPlayers.forEach((stats, index) => {
                     const row = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${stats.name}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore.toFixed(1)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
@@ -917,13 +961,13 @@
             }
 
             // --- Render Charts ---
-            const chartLabels = sortedPlayers.map(([name]) => name);
+            const chartLabels = sortedPlayers.map(p => p.name);
             const chartData = {
-                wins: sortedPlayers.map(([, stats]) => stats.wins),
-                losses: sortedPlayers.map(([, stats]) => stats.losses),
-                gamesPlayed: sortedPlayers.map(([, stats]) => stats.gamesPlayed),
-                pointDifferential: sortedPlayers.map(([, stats]) => stats.pointDifferential),
-                avgScore: sortedPlayers.map(([, stats]) => stats.avgScore),
+                wins: sortedPlayers.map(p => p.wins),
+                losses: sortedPlayers.map(p => p.losses),
+                gamesPlayed: sortedPlayers.map(p => p.gamesPlayed),
+                pointDifferential: sortedPlayers.map(p => p.pointDifferential),
+                avgScore: sortedPlayers.map(p => p.avgScore),
             };
 
             const chartColors = ['#2563EB', '#16A34A', '#F59E0B', '#DC2626', '#9333EA', '#DB2777', '#4F46E5', '#D946EF'];
@@ -978,8 +1022,50 @@
             }]);
         };
 
+        function setupSorting(tableId, stateObject, renderFunction, round) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
 
-        document.addEventListener('DOMContentLoaded', initializeFirebase);
+            table.querySelectorAll('.sortable-header').forEach(header => {
+                // Clear existing listeners to prevent duplicates
+                const newHeader = header.cloneNode(true);
+                header.parentNode.replaceChild(newHeader, header);
+
+                newHeader.addEventListener('click', () => {
+                    const column = newHeader.dataset.sort;
+                    const isRound = !!round;
+                    const stateKey = isRound ? round.id : 'league';
+                    
+                    const currentState = isRound ? (stateObject[stateKey] || { column: 'wins', direction: 'desc' }) : stateObject;
+                    
+                    let direction = 'desc';
+                    if (currentState.column === column && currentState.direction === 'desc') {
+                        direction = 'asc';
+                    }
+
+                    if(isRound){
+                         stateObject[stateKey] = { column, direction };
+                    } else {
+                         leagueSortState = { column, direction };
+                    }
+
+                    table.querySelectorAll('.sortable-header').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+                    newHeader.classList.add(`sort-${direction}`);
+
+                    if(isRound){
+                        renderFunction(round, `leaderboard-body-${round.id.replace(/[^a-zA-Z0-9]/g, '-')}`);
+                    } else {
+                        renderFunction(allRoundsData);
+                    }
+                });
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            setupSorting('leagueLeaderboardTable', leagueSortState, updateLeagueStats);
+        });
     </script>
 </body>
 </html>
