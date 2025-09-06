@@ -27,10 +27,23 @@
         // Set Firebase log level for debugging
         setLogLevel('debug');
 
+        // Functions to show and hide the loading spinner
+        const showLoadingSpinner = () => {
+            const spinner = document.getElementById('loadingIndicator');
+            if (spinner) spinner.style.display = 'block';
+        };
+
+        const hideLoadingSpinner = () => {
+            const spinner = document.getElementById('loadingIndicator');
+            if (spinner) spinner.style.display = 'none';
+        };
+
         const initializeFirebase = async () => {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
+
+            showLoadingSpinner(); // Show spinner on initial load
 
             try {
                 if (initialAuthToken) {
@@ -43,6 +56,7 @@
             } catch (error) {
                 console.error("Firebase Auth error:", error);
                 document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}`;
+                hideLoadingSpinner(); // Hide spinner on auth error
                 return;
             }
 
@@ -58,8 +72,10 @@
                 if (rounds.length > 0) {
                     showTab(`tab-${rounds[0].id}`);
                 }
+                hideLoadingSpinner(); // Hide spinner after initial tabs are loaded
             }, (error) => {
                 console.error("Error fetching rounds:", error);
+                hideLoadingSpinner();
             });
         };
 
@@ -122,6 +138,7 @@
             newPanel.classList.remove('hidden');
 
             const roundId = newActiveTab.id.replace('tab-', '');
+            showLoadingSpinner(); // Show spinner when switching tabs
             updateInfographic(roundId);
         };
 
@@ -152,8 +169,10 @@
                     populateLeaderboard(data);
                     renderCharts(data);
                 }
+                hideLoadingSpinner(); // Hide spinner when match data is loaded
             }, (error) => {
                 console.error("Error fetching match data:", error);
+                hideLoadingSpinner();
             });
         };
         
