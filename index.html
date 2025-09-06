@@ -12,22 +12,16 @@
     <script type="module">
         // Firebase and Realtime Database imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, get, child } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwEb6uimdpzWYGKD66WiQpt-FDT7nwHts",
-            authDomain: "tennis-tracker-7eff9.firebaseapp.com",
-            projectId: "tennis-tracker-7eff9",
-            storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
-            messagingSenderId: "677749560869",
-            appId: "1:677749560869:web:c39cea9900805fd97851cc",
-            databaseURL: "https://tennis-tracker-7eff9-default-rtdb.firebaseio.com/"
-        };
-        
-        // Using a simpler, top-level collection for your own Firebase project.
-        const databasePath = "tennisRounds";
+        // Use the firebase config provided by the Canvas environment
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Use a simple, top-level key for Realtime Database.
+        const databasePath = `tennisRounds`;
 
         let db, auth, userId;
         let unsubscribeMatchData;
@@ -45,8 +39,13 @@
         
         // Function to create or reset the first round
         const createFirstRound = async () => {
+            console.log("Attempting to create the first round...");
             showLoadingSpinner();
             try {
+                if (!db) {
+                    console.error("Firebase database (db) is not initialized.");
+                    return;
+                }
                 const initialMatches = [
                     { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
                     { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
@@ -62,8 +61,13 @@
 
         // Function to add a new, subsequent round
         const addNewRound = async () => {
+            console.log("Attempting to add a new round...");
             showLoadingSpinner();
             try {
+                if (!db) {
+                    console.error("Firebase database (db) is not initialized.");
+                    return;
+                }
                 const snapshot = await get(ref(db, databasePath));
                 const rounds = snapshot.val() || {};
                 const nextRoundNumber = Object.keys(rounds).length + 1;
@@ -83,60 +87,71 @@
             }
         };
 
-        const initializeFirebase = async () => {
+        const initializeFirebase = () => {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getDatabase(app);
 
-            showLoadingSpinner(); // Show spinner on initial load
+            showLoadingSpinner();
 
-            try {
-                await signInAnonymously(auth);
-                userId = auth.currentUser.uid;
-                document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
-            } catch (error) {
-                console.error("Firebase Auth error:", error);
-                document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}`;
-                hideLoadingSpinner(); // Hide spinner on auth error
-                return;
-            }
+            // The onAuthStateChanged listener is the best way to handle user state changes.
+            // This ensures that the code runs only after the user is authenticated.
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
+                    
+                    // Attach event listeners ONLY when the user is authenticated and ready.
+                    const createRoundBtn = document.getElementById('createRoundBtn');
+                    if (createRoundBtn) {
+                        createRoundBtn.addEventListener('click', createFirstRound);
+                    }
+        
+                    const addNewRoundBtn = document.getElementById('addNewRoundBtn');
+                    if (addNewRoundBtn) {
+                        addNewRoundBtn.addEventListener('click', addNewRound);
+                    }
+                    
+                    // Now that we're authenticated, we can safely listen for database changes.
+                    onValue(ref(db, databasePath), (snapshot) => {
+                        const rounds = snapshot.val() || {};
+                        const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key }));
+        
+                        const createRoundContainer = document.getElementById('createRoundContainer');
+                        const addNewRoundContainer = document.getElementById('addNewRoundContainer');
+        
+                        if (roundsArray.length > 0) {
+                            createRoundContainer.style.display = 'none';
+                            addNewRoundContainer.style.display = 'block';
+                            populateTabs(roundsArray);
+                            showTab(`tab-${roundsArray[0].id}`);
+                        } else {
+                            createRoundContainer.style.display = 'block';
+                            addNewRoundContainer.style.display = 'none';
+                            document.getElementById('tabList').innerHTML = '';
+                            document.getElementById('tabPanelsContainer').innerHTML = '';
+                        }
+        
+                        hideLoadingSpinner();
+                    }, (error) => {
+                        console.error("Error fetching rounds:", error);
+                        hideLoadingSpinner();
+                    });
 
-            // Add event listener for the create new round button
-            const createRoundBtn = document.getElementById('createRoundBtn');
-            if (createRoundBtn) {
-                createRoundBtn.addEventListener('click', createFirstRound);
-            }
-
-            // Add event listener for the add new round button
-            const addNewRoundBtn = document.getElementById('addNewRoundBtn');
-            if (addNewRoundBtn) {
-                addNewRoundBtn.addEventListener('click', addNewRound);
-            }
-
-            // Set up a listener for the rounds data from Realtime Database
-            onValue(ref(db, databasePath), (snapshot) => {
-                const rounds = snapshot.val() || {};
-                const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key }));
-
-                const createRoundContainer = document.getElementById('createRoundContainer');
-                const addNewRoundContainer = document.getElementById('addNewRoundContainer');
-
-                if (roundsArray.length > 0) {
-                    createRoundContainer.style.display = 'none';
-                    addNewRoundContainer.style.display = 'block';
-                    populateTabs(roundsArray);
-                    showTab(`tab-${roundsArray[0].id}`);
                 } else {
-                    createRoundContainer.style.display = 'block';
-                    addNewRoundContainer.style.display = 'none';
-                    document.getElementById('tabList').innerHTML = '';
-                    document.getElementById('tabPanelsContainer').innerHTML = '';
+                    // Sign in anonymously if no user is found.
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth error:", error);
+                        document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}`;
+                        hideLoadingSpinner();
+                    }
                 }
-
-                hideLoadingSpinner();
-            }, (error) => {
-                console.error("Error fetching rounds:", error);
-                hideLoadingSpinner();
             });
         };
 
@@ -206,6 +221,10 @@
         const updateInfographic = (roundId) => {
             if (unsubscribeMatchData) {
                 unsubscribeMatchData();
+            }
+            if (!db) {
+                console.error("Firebase database (db) is not initialized for updateInfographic.");
+                return;
             }
 
             const roundRef = ref(db, `${databasePath}/${roundId}`);
