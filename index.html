@@ -61,7 +61,7 @@
                 </div>
                 
                 <div role="tablist" aria-label="League Rounds" class="flex flex-col items-start space-y-2 mt-8" id="tabList">
-                    </div>
+                </div>
             </div>
             
             <p class="text-xs text-gray-400 mt-8">Your app ID: <span class="font-mono" id="appIdDisplay"></span></p>
@@ -71,7 +71,7 @@
             <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Match Data & Statistics</h2>
 
             <div id="tabPanelsContainer" class="space-y-8">
-                </div>
+            </div>
             
             <div class="mt-12 space-y-8">
                 <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Overall Statistics</h2>
@@ -98,28 +98,22 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Most Dominant Win</h3>
                         <div id="mostDominantWinContainer" class="flex flex-col items-center">
-                            </div>
+                        </div>
                     </div>
-                
-                    <div class="bg-white rounded-xl shadow-lg p-6">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Head-to-Head Records</h3>
-                        <div id="headToHeadContainer" class="overflow-x-auto rounded-lg border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 1</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player 2</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P1 Wins</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P2 Wins</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="headToHeadBody" class="bg-white divide-y divide-gray-200">
-                                    </tbody>
-                            </table>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Longest Winning Streak</h3>
+                        <div id="longestWinStreakContainer" class="flex flex-col items-center">
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Closest Match</h3>
+                        <div id="closestMatchContainer" class="flex flex-col items-center">
                         </div>
                     </div>
                 </div>
@@ -593,405 +587,486 @@
                 const sanitizedId = round.id.replace(/[^a-zA-Z0-9]/g, '-');
                 
                 const tabButton = document.createElement('div'); // Change to div to hold button and icon
-                tabButton.className = 'flex items-center gap-2 text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border-l-4 border-l-transparent';
+                tabButton.className = 'flex items-center gap-2 w-full text-lg font-semibold text-gray-500 py-3 px-6 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border-l-4 border-l-transparent';
                 tabButton.setAttribute('role', 'tab');
                 tabButton.setAttribute('id', `tab-${sanitizedId}`);
                 tabButton.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-                tabButton.setAttribute('aria-controls', `panel-${sanitizedId}`);
-                tabButton.addEventListener('click', () => showTab(`tab-${sanitizedId}`));
-
-                const nameSpan = document.createElement('span');
-                nameSpan.innerText = round.name;
-                nameSpan.contentEditable = true;
-                nameSpan.className = 'flex-grow px-2 py-1 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500';
-                nameSpan.dataset.roundKey = round.name; // Store original key
-                nameSpan.addEventListener('blur', saveRoundName);
-                nameSpan.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.target.blur();
-                    }
-                });
+                tabButton.onclick = () => showTab(tabButton.id);
+                
+                const tabNameSpan = document.createElement('span');
+                tabNameSpan.className = "flex-grow pr-2 truncate"; // Add truncation and padding for overflow
+                tabNameSpan.innerText = round.name;
+                tabNameSpan.setAttribute('contenteditable', 'true'); // Make the span editable
+                tabNameSpan.dataset.roundKey = round.id; // Store the original key
+                tabNameSpan.onblur = saveRoundName;
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-100';
-                deleteBtn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.332.594a.75.75 0 0 0-.786 1.232l1.57.878A4.502 4.502 0 0 1 10 4.5a4.502 4.502 0 0 1 5.348 2.373l1.57-.878a.75.75 0 0 0-.786-1.232A12.75 12.75 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 12.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 .75-.75Zm.75-6.75a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm-5 0a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm10.5.5a.75.75 0 0 1 0-1.5h.5a.75.75 0 0 1 0 1.5h-.5Z" clip-rule="evenodd" />
-                    </svg>
-                `;
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                deleteBtn.className = 'p-1 rounded-full text-red-500 hover:bg-red-100 transition-colors';
+                deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.332.594A2.25 2.25 0 0 0 2.25 6.75v1.25a.75.75 0 0 0 1.5 0V7.5h11.5v.5a.75.75 0 0 0 1.5 0V6.75a2.25 2.25 0 0 0-1.418-2.063c-.752-.319-1.537-.517-2.332-.594V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM4.25 10.5a.75.75 0 0 0 0 1.5h.75a.75.75 0 0 0 0-1.5h-.75Zm-.75 3.75a.75.75 0 0 1 .75-.75h.75a.75.75 0 0 1 0 1.5h-.75a.75.75 0 0 1-.75-.75ZM13 10.5a.75.75 0 0 0 0 1.5h.75a.75.75 0 0 0 0-1.5H13Zm-.75 3.75a.75.75 0 0 1 .75-.75h.75a.75.75 0 0 1 0 1.5h-.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+                                     </svg>
+                                     `;
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation(); // Prevent the tab click event
                     deleteRound(round.id);
-                });
-
-                tabButton.appendChild(nameSpan);
+                };
+                
+                tabButton.appendChild(tabNameSpan);
                 tabButton.appendChild(deleteBtn);
                 tabList.appendChild(tabButton);
 
-                const panel = document.createElement('div');
-                panel.className = 'hidden space-y-8';
-                panel.setAttribute('role', 'tabpanel');
-                panel.setAttribute('id', `panel-${sanitizedId}`);
-                panel.setAttribute('aria-labelledby', `tab-${sanitizedId}`);
-                tabPanels.appendChild(panel);
-                
-                // Real-time listener for each round's matches
-                onValue(ref(db, `${databasePath}/${round.id}/matches`), (snapshot) => {
-                    const matches = snapshot.val() || [];
-                    updateMatchData(round.id, matches);
-                });
+                // Create a tab panel for each round
+                const tabPanel = document.createElement('div');
+                tabPanel.className = 'tab-panel hidden';
+                tabPanel.setAttribute('role', 'tabpanel');
+                tabPanel.setAttribute('id', `panel-${sanitizedId}`);
+                tabPanel.setAttribute('aria-labelledby', `tab-${sanitizedId}`);
+                tabPanel.innerHTML = createRoundPanel(round);
+                tabPanels.appendChild(tabPanel);
             });
         };
-        
+
         const showTab = (tabId) => {
             document.querySelectorAll('[role="tab"]').forEach(tab => {
                 tab.classList.remove('active');
                 tab.setAttribute('aria-selected', 'false');
             });
+
             document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
                 panel.classList.add('hidden');
             });
-            const tabButton = document.getElementById(tabId);
-            const panelId = tabButton.getAttribute('aria-controls');
-            const panel = document.getElementById(panelId);
-            tabButton.classList.add('active');
-            tabButton.setAttribute('aria-selected', 'true');
-            panel.classList.remove('hidden');
+
+            const selectedTab = document.getElementById(tabId);
+            const panelId = `panel-${tabId.split('-').slice(1).join('-')}`;
+            const selectedPanel = document.getElementById(panelId);
+
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+                selectedTab.setAttribute('aria-selected', 'true');
+            }
+            if (selectedPanel) {
+                selectedPanel.classList.remove('hidden');
+                attachMatchListeners(selectedPanel, selectedTab.dataset.roundKey);
+            }
         };
 
-        const updateMatchData = (roundId, matches) => {
-            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
-            const panel = document.getElementById(`panel-${sanitizedId}`);
-            if (!panel) return;
+        const createRoundPanel = (round) => {
+            const matchesHtml = round.matches.map((match, index) => {
+                const isWinnerA = match.scoreA > match.scoreB;
+                const isWinnerB = match.scoreB > match.scoreA;
+                const matchId = `${round.id}-${index}`;
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+                        <div class="flex-1 w-full flex flex-col md:flex-row items-center gap-4">
+                            <div class="flex items-center space-x-2 w-full">
+                                <span class="text-sm font-semibold w-20 truncate" contenteditable="true" data-player="A" data-match-id="${matchId}">${match.playerA}</span>
+                                <input type="number" value="${match.scoreA}" class="score-input p-2 rounded-lg border-2 border-gray-300 w-16 text-center focus:border-blue-500 transition-colors" data-match-id="${matchId}" data-player="A">
+                            </div>
+                            <span class="text-lg font-bold text-gray-400">vs</span>
+                            <div class="flex items-center space-x-2 w-full">
+                                <span class="text-sm font-semibold w-20 truncate" contenteditable="true" data-player="B" data-match-id="${matchId}">${match.playerB}</span>
+                                <input type="number" value="${match.scoreB}" class="score-input p-2 rounded-lg border-2 border-gray-300 w-16 text-center focus:border-blue-500 transition-colors" data-match-id="${matchId}" data-player="B">
+                            </div>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <button class="delete-match-btn text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-red-50" data-round-id="${round.id}" data-match-index="${index}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m-1.022.165a48.123 48.123 0 0 0-3.478-.397m-.113 13.923-1.636 1.636m1.636-1.636L19.462 3.543m-1.636 1.636L3.543 19.462" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-            panel.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-semibold text-gray-800">Match List for ${roundId}</h3>
-                    <button id="addMatchBtn-${sanitizedId}" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-xl transition-all hover:bg-blue-600 active:scale-95 text-sm">
-                        + Add Match
+            return `
+                <div class="space-y-4">
+                    ${matchesHtml}
+                </div>
+                <div class="mt-6">
+                    <button class="add-match-btn w-full bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-colors hover:bg-gray-300" data-round-id="${round.id}">
+                        Add Match
                     </button>
                 </div>
-                <div id="matchesContainer-${sanitizedId}" class="space-y-4"></div>
             `;
+        };
+
+        const attachMatchListeners = (panel, roundId) => {
+            panel.querySelectorAll('.score-input').forEach(input => {
+                input.onchange = async (e) => {
+                    const matchId = e.target.dataset.matchId;
+                    const player = e.target.dataset.player;
+                    const newScore = parseInt(e.target.value, 10);
+
+                    // Find the match
+                    const roundRef = ref(db, `${databasePath}/${roundId}/matches`);
+                    const snapshot = await get(roundRef);
+                    const matches = snapshot.val() || [];
+                    const matchIndex = matches.findIndex(match => `${roundId}-${matches.indexOf(match)}` === matchId);
+
+                    if (matchIndex !== -1) {
+                        const updatedMatches = [...matches];
+                        if (player === 'A') {
+                            updatedMatches[matchIndex].scoreA = newScore;
+                        } else {
+                            updatedMatches[matchIndex].scoreB = newScore;
+                        }
+                        await set(roundRef, updatedMatches);
+                    }
+                };
+            });
             
-            const addMatchBtn = document.getElementById(`addMatchBtn-${sanitizedId}`);
-            if(addMatchBtn) {
-                addMatchBtn.addEventListener('click', () => addMatch(roundId));
-            }
+            panel.querySelectorAll('.add-match-btn').forEach(button => {
+                button.onclick = () => addMatch(roundId);
+            });
+            
+            panel.querySelectorAll('.delete-match-btn').forEach(button => {
+                const matchIndex = parseInt(button.dataset.matchIndex, 10);
+                const roundId = button.dataset.roundId;
+                button.onclick = () => deleteMatch(roundId, matchIndex);
+            });
 
-            const matchesContainer = document.getElementById(`matchesContainer-${sanitizedId}`);
-            matches.forEach((match, index) => {
-                const matchDiv = document.createElement('div');
-                matchDiv.className = 'bg-white rounded-xl shadow p-4 flex flex-col md:flex-row items-center gap-4';
-                matchDiv.innerHTML = `
-                    <div class="flex-1 w-full flex items-center gap-2">
-                        <span contenteditable="true" data-player-id="A" class="flex-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 font-medium text-center hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">${match.playerA}</span>
-                        <input type="number" data-score-id="A" value="${match.scoreA}" class="w-16 text-center border rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <span class="text-gray-500 font-bold text-lg md:text-xl">-</span>
-                    <div class="flex-1 w-full flex items-center gap-2">
-                        <input type="number" data-score-id="B" value="${match.scoreB}" class="w-16 text-center border rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <span contenteditable="true" data-player-id="B" class="flex-1 px-2 py-1 rounded-md bg-purple-100 text-purple-800 font-medium text-center hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">${match.playerB}</span>
-                    </div>
-                    <button class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-100" data-match-index="${index}">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.332.594a.75.75 0 0 0-.786 1.232l1.57.878A4.502 4.502 0 0 1 10 4.5a4.502 4.502 0 0 1 5.348 2.373l1.57-.878a.75.75 0 0 0-.786-1.232A12.75 12.75 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 12.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 .75-.75Zm.75-6.75a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm-5 0a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm10.5.5a.75.75 0 0 1 0-1.5h.5a.75.75 0 0 1 0 1.5h-.5Z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                `;
-                matchesContainer.appendChild(matchDiv);
+            panel.querySelectorAll('[contenteditable="true"]').forEach(span => {
+                span.onblur = async (e) => {
+                    const newName = e.target.innerText.trim();
+                    const matchId = e.target.dataset.matchId;
+                    const player = e.target.dataset.player;
 
-                const playerAInput = matchDiv.querySelector('[data-player-id="A"]');
-                const scoreAInput = matchDiv.querySelector('[data-score-id="A"]');
-                const playerBInput = matchDiv.querySelector('[data-player-id="B"]');
-                const scoreBInput = matchDiv.querySelector('[data-score-id="B"]');
-                const deleteButton = matchDiv.querySelector('button[data-match-index]');
-                
-                playerAInput.addEventListener('blur', (e) => saveMatchData(roundId, index, 'playerA', e.target.innerText));
-                scoreAInput.addEventListener('change', (e) => saveMatchData(roundId, index, 'scoreA', parseInt(e.target.value, 10) || 0));
-                playerBInput.addEventListener('blur', (e) => saveMatchData(roundId, index, 'playerB', e.target.innerText));
-                scoreBInput.addEventListener('change', (e) => saveMatchData(roundId, index, 'scoreB', parseInt(e.target.value, 10) || 0));
-                deleteButton.addEventListener('click', () => deleteMatch(roundId, index));
+                    // Find the match
+                    const roundRef = ref(db, `${databasePath}/${roundId}/matches`);
+                    const snapshot = await get(roundRef);
+                    const matches = snapshot.val() || [];
+                    const matchIndex = matches.findIndex(match => `${roundId}-${matches.indexOf(match)}` === matchId);
+
+                    if (matchIndex !== -1) {
+                        const updatedMatches = [...matches];
+                        if (player === 'A') {
+                            updatedMatches[matchIndex].playerA = newName;
+                        } else {
+                            updatedMatches[matchIndex].playerB = newName;
+                        }
+                        await set(roundRef, updatedMatches);
+                    }
+                };
             });
         };
 
-        const saveMatchData = async (roundId, index, field, value) => {
-            showLoadingSpinner();
-            try {
-                const matchRef = ref(db, `${databasePath}/${roundId}/matches/${index}`);
-                await get(matchRef).then(async (snapshot) => {
-                    if (snapshot.exists()) {
-                        const currentData = snapshot.val();
-                        currentData[field] = value;
-                        await set(matchRef, currentData);
-                        console.log(`Match ${index} in ${roundId} updated.`);
-                    }
-                });
-            } catch (e) {
-                console.error("Error saving match data:", e);
-                showMessage("Error saving data.", "error");
-            } finally {
-                hideLoadingSpinner();
-            }
-        };
-
-        const updateOverallStats = (allRoundsData) => {
+        const updateOverallStats = (rounds) => {
             const playerStats = {};
-            const headToHead = {};
-            let mostDominantWin = null;
+            const allMatches = [];
 
-            allRoundsData.forEach(round => {
+            rounds.forEach(round => {
                 if (round.matches) {
                     round.matches.forEach(match => {
-                        const { playerA, scoreA, playerB, scoreB } = match;
+                        allMatches.push(match);
+                        const playerA = match.playerA;
+                        const playerB = match.playerB;
+                        const scoreA = parseInt(match.scoreA, 10);
+                        const scoreB = parseInt(match.scoreB, 10);
 
-                        const pointsDiff = Math.abs(scoreA - scoreB);
-                        if (!mostDominantWin || pointsDiff > mostDominantWin.diff) {
-                            mostDominantWin = {
-                                round: round.name,
-                                winner: scoreA > scoreB ? playerA : playerB,
-                                loser: scoreA > scoreB ? playerB : playerA,
-                                score: `${Math.max(scoreA, scoreB)} - ${Math.min(scoreA, scoreB)}`,
-                                diff: pointsDiff
-                            };
+                        if (!playerStats[playerA]) {
+                            playerStats[playerA] = { wins: 0, losses: 0, gamesPlayed: 0, pointsFor: 0, pointsAgainst: 0, streak: 0, currentStreak: 0, lastResult: null };
+                        }
+                        if (!playerStats[playerB]) {
+                            playerStats[playerB] = { wins: 0, losses: 0, gamesPlayed: 0, pointsFor: 0, pointsAgainst: 0, streak: 0, currentStreak: 0, lastResult: null };
                         }
 
-                        [playerA, playerB].forEach(player => {
-                            if (!playerStats[player]) {
-                                playerStats[player] = { wins: 0, losses: 0, games: 0, totalScore: 0, totalOpponentScore: 0 };
-                            }
-                        });
-
-                        playerStats[playerA].games++;
-                        playerStats[playerB].games++;
-                        playerStats[playerA].totalScore += scoreA;
-                        playerStats[playerB].totalScore += scoreB;
-                        playerStats[playerA].totalOpponentScore += scoreB;
-                        playerStats[playerB].totalOpponentScore += scoreA;
-                        
+                        // Update stats for Player A
+                        playerStats[playerA].gamesPlayed++;
+                        playerStats[playerA].pointsFor += scoreA;
+                        playerStats[playerA].pointsAgainst += scoreB;
                         if (scoreA > scoreB) {
                             playerStats[playerA].wins++;
-                            playerStats[playerB].losses++;
-                        } else if (scoreB > scoreA) {
-                            playerStats[playerB].wins++;
+                            playerStats[playerA].currentStreak = playerStats[playerA].lastResult === 'win' ? playerStats[playerA].currentStreak + 1 : 1;
+                            playerStats[playerA].lastResult = 'win';
+                        } else if (scoreA < scoreB) {
                             playerStats[playerA].losses++;
+                            playerStats[playerA].currentStreak = playerStats[playerA].lastResult === 'loss' ? playerStats[playerA].currentStreak + 1 : 1;
+                            playerStats[playerA].lastResult = 'loss';
+                        } else {
+                            playerStats[playerA].currentStreak = 0;
+                            playerStats[playerA].lastResult = 'draw';
+                        }
+                         if (playerStats[playerA].currentStreak > playerStats[playerA].streak) {
+                            playerStats[playerA].streak = playerStats[playerA].currentStreak;
                         }
 
-                        // Update head-to-head
-                        const players = [playerA, playerB].sort();
-                        const key = `${players[0]}-${players[1]}`;
-                        if (!headToHead[key]) {
-                            headToHead[key] = { p1: players[0], p2: players[1], p1Wins: 0, p2Wins: 0 };
-                        }
-                        if (playerA > playerB) {
-                            if (scoreA > scoreB) headToHead[key].p1Wins++;
-                            if (scoreB > scoreA) headToHead[key].p2Wins++;
+                        // Update stats for Player B
+                        playerStats[playerB].gamesPlayed++;
+                        playerStats[playerB].pointsFor += scoreB;
+                        playerStats[playerB].pointsAgainst += scoreA;
+                        if (scoreB > scoreA) {
+                            playerStats[playerB].wins++;
+                            playerStats[playerB].currentStreak = playerStats[playerB].lastResult === 'win' ? playerStats[playerB].currentStreak + 1 : 1;
+                            playerStats[playerB].lastResult = 'win';
+                        } else if (scoreB < scoreA) {
+                            playerStats[playerB].losses++;
+                            playerStats[playerB].currentStreak = playerStats[playerB].lastResult === 'loss' ? playerStats[playerB].currentStreak + 1 : 1;
+                            playerStats[playerB].lastResult = 'loss';
                         } else {
-                            if (scoreA > scoreB) headToHead[key].p2Wins++;
-                            if (scoreB > scoreA) headToHead[key].p1Wins++;
+                            playerStats[playerB].currentStreak = 0;
+                            playerStats[playerB].lastResult = 'draw';
+                        }
+                        if (playerStats[playerB].currentStreak > playerStats[playerB].streak) {
+                            playerStats[playerB].streak = playerStats[playerB].currentStreak;
                         }
                     });
                 }
             });
 
-            // Calculate final stats and sort leaderboard
-            const leaderboardData = Object.keys(playerStats).map(player => {
+            // Calculate overall player statistics
+            const leaderboard = Object.keys(playerStats).map(player => {
                 const stats = playerStats[player];
-                const winPercentage = stats.games > 0 ? (stats.wins / stats.games) * 100 : 0;
-                const avgScore = stats.games > 0 ? stats.totalScore / stats.games : 0;
-                const pointDiff = stats.totalScore - stats.totalOpponentScore;
+                const winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0;
+                const avgScore = stats.gamesPlayed > 0 ? (stats.pointsFor / stats.gamesPlayed) : 0;
+                const pointDifferential = stats.pointsFor - stats.pointsAgainst;
                 return {
                     player,
                     ...stats,
                     winPercentage: winPercentage.toFixed(1),
                     avgScore: avgScore.toFixed(1),
-                    pointDiff
+                    pointDifferential
                 };
-            }).sort((a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff);
-            
-            renderLeaderboard(leaderboardData);
-            renderMostDominantWin(mostDominantWin);
-            renderHeadToHead(headToHead);
-            renderCharts(leaderboardData);
+            }).sort((a, b) => b.wins - a.wins || b.pointDifferential - a.pointDifferential);
+
+            renderLeaderboard(leaderboard);
+            renderCharts(leaderboard);
+            renderMostDominantWin(allMatches);
+            renderLongestWinStreak(leaderboard);
+            renderClosestMatch(allMatches);
         };
 
-        const renderLeaderboard = (data) => {
-            const tbody = document.getElementById('leaderboardBody');
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No matches played yet.</td></tr>';
-                return;
-            }
-            data.forEach((player, index) => {
+        const renderLeaderboard = (leaderboard) => {
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = '';
+            leaderboard.forEach((player, index) => {
                 const row = document.createElement('tr');
-                row.className = 'text-sm text-gray-700 hover:bg-gray-50 transition-colors';
+                row.className = 'hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
-                    <td class="px-6 py-4 whitespace-nowrap font-medium">${player.player}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.wins}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.losses}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.games}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.winPercentage}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.avgScore}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${player.pointDiff}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.player}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.wins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.losses}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.gamesPlayed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.winPercentage}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.avgScore}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">${player.pointDifferential}</td>
                 `;
-                tbody.appendChild(row);
+                leaderboardBody.appendChild(row);
             });
         };
 
-        const renderMostDominantWin = (dominantWin) => {
+        const renderMostDominantWin = (allMatches) => {
+            let mostDominantWin = null;
+            let maxScoreDiff = -1;
+
+            allMatches.forEach(match => {
+                const scoreDiff = Math.abs(parseInt(match.scoreA, 10) - parseInt(match.scoreB, 10));
+                if (scoreDiff > maxScoreDiff) {
+                    maxScoreDiff = scoreDiff;
+                    mostDominantWin = match;
+                }
+            });
+
             const container = document.getElementById('mostDominantWinContainer');
             container.innerHTML = '';
-            if (!dominantWin) {
-                container.innerHTML = `<p class="text-gray-500">No matches recorded yet.</p>`;
-                return;
-            }
-            container.innerHTML = `
-                <p class="text-3xl font-bold text-gray-800 mb-2">${dominantWin.winner}</p>
-                <p class="text-lg text-gray-600 mb-4">defeated ${dominantWin.loser}</p>
-                <div class="inline-flex items-center gap-2 bg-green-500 text-white font-bold text-xl px-4 py-2 rounded-full shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-11.25a.75.75 0 0 0-1.5 0v4.59L7.3 9.22a.75.75 0 0 0-1.06 1.06l3.25 3.25a.75.75 0 0 0 1.06 0l3.25-3.25a.75.75 0 1 0-1.06-1.06l-1.97 1.97V6.75Z" clip-rule="evenodd" />
-                    </svg>
-                    <span>${dominantWin.score}</span>
-                </div>
-                <p class="text-sm text-gray-400 mt-2">In ${dominantWin.round}</p>
-            `;
-        };
-
-        const renderHeadToHead = (data) => {
-            const tbody = document.getElementById('headToHeadBody');
-            tbody.innerHTML = '';
-            const dataArray = Object.values(data);
-            if (dataArray.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Not enough data.</td></tr>';
-                return;
-            }
-            dataArray.forEach(record => {
-                const row = document.createElement('tr');
-                row.className = 'text-sm text-gray-700 hover:bg-gray-50 transition-colors';
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${record.p1}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${record.p2}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${record.p1Wins}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${record.p2Wins}</td>
+            if (mostDominantWin) {
+                const winner = parseInt(mostDominantWin.scoreA) > parseInt(mostDominantWin.scoreB) ? mostDominantWin.playerA : mostDominantWin.playerB;
+                const score = `${mostDominantWin.scoreA} - ${mostDominantWin.scoreB}`;
+                container.innerHTML = `
+                    <p class="text-3xl font-extrabold text-blue-600">${winner}</p>
+                    <p class="text-lg font-semibold text-gray-600 mt-1">won by ${maxScoreDiff} points</p>
+                    <p class="text-sm text-gray-500 mt-2">${mostDominantWin.playerA} vs ${mostDominantWin.playerB}</p>
+                    <p class="text-2xl font-bold text-gray-800">${score}</p>
                 `;
-                tbody.appendChild(row);
-            });
+            } else {
+                container.innerHTML = `<p class="text-gray-500">No matches played yet.</p>`;
+            }
         };
 
-        const renderCharts = (data) => {
-            const players = data.map(p => p.player);
-            
-            // Re-use chart instances to avoid memory leaks
-            const destroyChart = (chartId) => {
-                if (chartInstances[chartId]) {
-                    chartInstances[chartId].destroy();
+        const renderLongestWinStreak = (leaderboard) => {
+            let longestStreakPlayer = null;
+            let maxStreak = 0;
+
+            leaderboard.forEach(player => {
+                if (player.streak > maxStreak) {
+                    maxStreak = player.streak;
+                    longestStreakPlayer = player.player;
                 }
+            });
+
+            const container = document.getElementById('longestWinStreakContainer');
+            container.innerHTML = '';
+            if (longestStreakPlayer) {
+                container.innerHTML = `
+                    <p class="text-3xl font-extrabold text-blue-600">${maxStreak}</p>
+                    <p class="text-lg font-semibold text-gray-600 mt-1">consecutive wins</p>
+                    <p class="text-2xl font-bold text-gray-800">${longestStreakPlayer}</p>
+                `;
+            } else {
+                container.innerHTML = `<p class="text-gray-500">No wins recorded yet.</p>`;
+            }
+        };
+
+        const renderClosestMatch = (allMatches) => {
+            let closestMatch = null;
+            let minScoreDiff = Infinity;
+
+            allMatches.forEach(match => {
+                const scoreDiff = Math.abs(parseInt(match.scoreA, 10) - parseInt(match.scoreB, 10));
+                if (scoreDiff < minScoreDiff) {
+                    minScoreDiff = scoreDiff;
+                    closestMatch = match;
+                }
+            });
+
+            const container = document.getElementById('closestMatchContainer');
+            container.innerHTML = '';
+            if (closestMatch) {
+                const score = `${closestMatch.scoreA} - ${closestMatch.scoreB}`;
+                container.innerHTML = `
+                    <p class="text-3xl font-extrabold text-blue-600">${minScoreDiff} points</p>
+                    <p class="text-lg font-semibold text-gray-600 mt-1">difference</p>
+                    <p class="text-sm text-gray-500 mt-2">${closestMatch.playerA} vs ${closestMatch.playerB}</p>
+                    <p class="text-2xl font-bold text-gray-800">${score}</p>
+                `;
+            } else {
+                container.innerHTML = `<p class="text-gray-500">No matches played yet.</p>`;
+            }
+        };
+
+        const renderCharts = (leaderboard) => {
+            const chartData = {
+                labels: leaderboard.map(p => p.player),
+                wins: leaderboard.map(p => p.wins),
+                losses: leaderboard.map(p => p.losses),
+                gamesPlayed: leaderboard.map(p => p.gamesPlayed),
+                pointDifferential: leaderboard.map(p => p.pointDifferential),
+                avgScore: leaderboard.map(p => parseFloat(p.avgScore))
             };
-            
-            // Win/Loss Chart
-            destroyChart('winLossChart');
-            const winLossCtx = document.getElementById('winLossChart').getContext('2d');
-            chartInstances.winLossChart = new Chart(winLossCtx, {
-                type: 'bar',
-                data: {
-                    labels: players,
-                    datasets: [
-                        {
-                            label: 'Wins',
-                            data: data.map(p => p.wins),
-                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                            borderRadius: 8
-                        },
-                        {
-                            label: 'Losses',
-                            data: data.map(p => p.losses),
-                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                            borderRadius: 8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
+
+            // Destroy existing chart instances before creating new ones
+            Object.values(chartInstances).forEach(chart => chart.destroy());
+            chartInstances = {};
+
+            const winLossCtx = document.getElementById('winLossChart');
+            if(winLossCtx){
+                chartInstances.winLossChart = new Chart(winLossCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'Wins',
+                                data: chartData.wins,
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Losses',
+                                data: chartData.losses,
+                                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                                borderColor: 'rgba(239, 68, 68, 1)',
+                                borderWidth: 1
+                            }
+                        ]
                     },
-                    plugins: { legend: { display: true } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
 
-            // Games Played Chart
-            destroyChart('gamesPlayedChart');
-            const gamesPlayedCtx = document.getElementById('gamesPlayedChart').getContext('2d');
-            chartInstances.gamesPlayedChart = new Chart(gamesPlayedCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: players,
-                    datasets: [{
-                        label: 'Games Played',
-                        data: data.map(p => p.games),
-                        backgroundColor: ['#2563EB', '#8B5CF6', '#F97316', '#10B981', '#3B82F6'],
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
+            const gamesPlayedCtx = document.getElementById('gamesPlayedChart');
+            if(gamesPlayedCtx){
+                chartInstances.gamesPlayedChart = new Chart(gamesPlayedCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Games Played',
+                            data: chartData.gamesPlayed,
+                            backgroundColor: chartData.labels.map((_, i) => `hsl(${i * 60}, 70%, 50%)`),
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Total Games Played'
+                            }
+                        }
+                    }
+                });
+            }
+
+            const pointDifferentialCtx = document.getElementById('pointDifferentialChart');
+            if(pointDifferentialCtx){
+                chartInstances.pointDifferentialChart = new Chart(pointDifferentialCtx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Point Differential',
+                            data: chartData.pointDifferential,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
             
-            // Point Differential Chart
-            destroyChart('pointDifferentialChart');
-            const pointDiffCtx = document.getElementById('pointDifferentialChart').getContext('2d');
-            chartInstances.pointDifferentialChart = new Chart(pointDiffCtx, {
-                type: 'bar',
-                data: {
-                    labels: players,
-                    datasets: [{
-                        label: 'Point Differential',
-                        data: data.map(p => p.pointDiff),
-                        backgroundColor: data.map(p => p.pointDiff >= 0 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            // Average Score Chart
-            destroyChart('averageScoreChart');
-            const avgScoreCtx = document.getElementById('averageScoreChart').getContext('2d');
-            chartInstances.averageScoreChart = new Chart(avgScoreCtx, {
-                type: 'line',
-                data: {
-                    labels: players,
-                    datasets: [{
-                        label: 'Average Score per Game',
-                        data: data.map(p => p.avgScore),
-                        borderColor: '#22C55E',
-                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } },
-                    plugins: { legend: { display: false } }
-                }
-            });
+            const averageScoreCtx = document.getElementById('averageScoreChart');
+            if(averageScoreCtx){
+                chartInstances.averageScoreChart = new Chart(averageScoreCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: 'Average Score',
+                            data: chartData.avgScore,
+                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
         };
 
-        // Initialize Firebase when the window loads
-        window.addEventListener('load', initializeFirebase);
+        window.onload = initializeFirebase;
     </script>
 </body>
 </html>
