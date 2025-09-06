@@ -13,21 +13,24 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        .tab-button.active {
+            color: #2563EB;
+            border-left-width: 4px;
+            border-left-color: #2563EB;
+            background-color: #F3F4F6;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Main Container -->
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-7xl overflow-hidden flex flex-col lg:flex-row">
         
-        <!-- Tab Navigation and Controls -->
         <div class="p-8 lg:p-12 w-full lg:w-1/3 flex flex-col justify-between">
             <div>
                 <div class="flex items-center justify-between mb-8">
                     <h1 class="text-3xl lg:text-4xl font-extrabold text-blue-800">League Stats</h1>
                 </div>
 
-                <!-- User ID and Loading Status -->
                 <div class="mb-6 text-sm text-gray-500 flex items-center space-x-2">
                     <svg id="loadingIndicator" class="animate-spin h-5 w-5 text-blue-500 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -36,10 +39,8 @@
                     <span id="userIdDisplay" class="truncate"></span>
                 </div>
                 
-                <!-- Temporary Message Box -->
                 <div id="messageBox" class="hidden"></div>
                 
-                <!-- Main Controls -->
                 <div id="createRoundContainer" class="flex flex-col items-start gap-4 hidden">
                     <p class="text-gray-600 mb-2">No rounds found. Let's start a new one!</p>
                     <button id="createRoundBtn" class="w-full flex justify-center items-center gap-2 bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-blue-600 active:scale-95 shadow-lg">
@@ -59,28 +60,22 @@
                     </button>
                 </div>
                 
-                <!-- Tab List -->
                 <div role="tablist" aria-label="League Rounds" class="flex flex-col items-start space-y-2 mt-8" id="tabList">
-                    <!-- Tabs will be populated here -->
-                </div>
+                    </div>
             </div>
             
             <p class="text-xs text-gray-400 mt-8">Your app ID: <span class="font-mono" id="appIdDisplay"></span></p>
         </div>
 
-        <!-- Tab Panels and Statistics Display -->
         <div class="p-8 lg:p-12 w-full lg:w-2/3 bg-gray-50 overflow-y-auto">
             <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Match Data & Statistics</h2>
 
             <div id="tabPanelsContainer" class="space-y-8">
-                <!-- Tab panels will be populated here -->
-            </div>
+                </div>
             
-            <!-- Overall Stats Section -->
             <div class="mt-12 space-y-8">
                 <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Overall Statistics</h2>
                 
-                <!-- Leaderboard Table -->
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Leaderboard</h3>
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
@@ -98,23 +93,18 @@
                                 </tr>
                             </thead>
                             <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
-                                <!-- Leaderboard rows will be populated here -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- New Stats Sections -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Most Dominant Win Card -->
                     <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Most Dominant Win</h3>
                         <div id="mostDominantWinContainer" class="flex flex-col items-center">
-                            <!-- Content populated by JS -->
-                        </div>
+                            </div>
                     </div>
                 
-                    <!-- Head-to-Head Records Table -->
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Head-to-Head Records</h3>
                         <div id="headToHeadContainer" class="overflow-x-auto rounded-lg border border-gray-200">
@@ -128,14 +118,12 @@
                                     </tr>
                                 </thead>
                                 <tbody id="headToHeadBody" class="bg-white divide-y divide-gray-200">
-                                    <!-- Head-to-head data will be populated here -->
-                                </tbody>
+                                    </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Charts Section -->
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance Charts</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -169,8 +157,6 @@
         </div>
     </div>
     
-    <!-- Modals -->
-    <!-- Player Count Modal -->
     <div id="playerCountModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
         <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
             <h3 class="text-xl font-bold mb-4">Create a New Round</h3>
@@ -183,7 +169,6 @@
         </div>
     </div>
     
-    <!-- Confirmation Modal for Delete -->
     <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
         <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
             <h3 class="text-xl font-bold mb-4 text-red-600">Confirm Deletion</h3>
@@ -203,12 +188,12 @@
         
         // Your Firebase configuration
         const firebaseConfig = {
-          apiKey: "AIzaSyDwEb6uimdpzWYGKD66WiQpt-FDT7nwHts",
-          authDomain: "tennis-tracker-7eff9.firebaseapp.com",
-          projectId: "tennis-tracker-7eff9",
-          storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
-          messagingSenderId: "677749560869",
-          appId: "1:677749560869:web:c39cea9900805fd97851cc"
+            apiKey: "AIzaSyDwEb6uimdpzWYGKD66WiQpt-FDT7nwHts",
+            authDomain: "tennis-tracker-7eff9.firebaseapp.com",
+            projectId: "tennis-tracker-7eff9",
+            storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
+            messagingSenderId: "677749560869",
+            appId: "1:677749560869:web:c39cea9900805fd97851cc"
         };
         
         // Use a static appId for this application.
@@ -220,6 +205,7 @@
 
         let db, auth, userId;
         let unsubscribeMatchData;
+        let chartInstances = {};
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -353,6 +339,72 @@
             }
         };
 
+        // Function to add a new match to a round
+        const addMatch = async (roundId) => {
+            if (!db) return;
+            showLoadingSpinner();
+            try {
+                const roundRef = ref(db, `${databasePath}/${roundId}/matches`);
+                const snapshot = await get(roundRef);
+                const matches = snapshot.val() || [];
+                
+                const newMatches = [...matches, { playerA: 'New Player', scoreA: 0, scoreB: 0, playerB: 'Opponent' }];
+                await set(roundRef, newMatches);
+                showMessage("New match added!", "success");
+            } catch (e) {
+                console.error("Error adding new match:", e);
+                showMessage("Error adding match.", "error");
+            } finally {
+                hideLoadingSpinner();
+            }
+        };
+        
+        // Function to delete a specific match from a round
+        const deleteMatch = async (roundId, matchIndex) => {
+            if (!db) return;
+            
+            // Show confirmation modal
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmText = document.getElementById('confirmText');
+            confirmText.innerText = `Are you sure you want to delete this match? This action cannot be undone.`;
+            confirmModal.classList.remove('hidden');
+
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+            const onConfirm = async () => {
+                confirmModal.classList.add('hidden');
+                showLoadingSpinner();
+                try {
+                    const roundRef = ref(db, `${databasePath}/${roundId}/matches`);
+                    const snapshot = await get(roundRef);
+                    const matches = snapshot.val() || [];
+                    
+                    if (matchIndex >= 0 && matchIndex < matches.length) {
+                        const updatedMatches = matches.filter((_, index) => index !== matchIndex);
+                        await set(roundRef, updatedMatches);
+                        showMessage("Match deleted successfully!", "success");
+                    }
+                } catch (e) {
+                    console.error("Error deleting match:", e);
+                    showMessage("Error deleting match.", "error");
+                } finally {
+                    hideLoadingSpinner();
+                    confirmDeleteBtn.removeEventListener('click', onConfirm);
+                    cancelDeleteBtn.removeEventListener('click', onCancel);
+                }
+            };
+
+            const onCancel = () => {
+                confirmModal.classList.add('hidden');
+                confirmDeleteBtn.removeEventListener('click', onConfirm);
+                cancelDeleteBtn.removeEventListener('click', onCancel);
+            };
+
+            confirmDeleteBtn.addEventListener('click', onConfirm);
+            cancelDeleteBtn.addEventListener('click', onCancel);
+        };
+
         // Function to delete a round
         const deleteRound = async (roundId) => {
             if (!db) {
@@ -450,13 +502,6 @@
         };
 
         const initializeFirebase = () => {
-            if (!firebaseConfig.apiKey) {
-                console.error("Firebase API Key is missing. Check your Firebase configuration.");
-                document.getElementById('userIdDisplay').innerText = `Error: Firebase API Key missing.`;
-                hideLoadingSpinner();
-                return;
-            }
-
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getDatabase(app);
@@ -495,7 +540,7 @@
                     // Now that we're authenticated, we can safely listen for database changes.
                     onValue(ref(db, databasePath), (snapshot) => {
                         const rounds = snapshot.val() || {};
-                        const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key }));
+                        const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key, ...rounds[key] }));
         
                         const createRoundContainer = document.getElementById('createRoundContainer');
                         const addNewRoundContainer = document.getElementById('addNewRoundContainer');
@@ -507,11 +552,14 @@
                             // Show the first tab after populating
                             const firstTabId = `tab-${roundsArray[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
                             showTab(firstTabId);
+                            updateOverallStats(roundsArray);
                         } else {
                             createRoundContainer.style.display = 'block';
                             addNewRoundContainer.style.display = 'none';
                             document.getElementById('tabList').innerHTML = '';
                             document.getElementById('tabPanelsContainer').innerHTML = '';
+                            // Clear overall stats
+                            updateOverallStats([]);
                         }
         
                         hideLoadingSpinner();
@@ -545,360 +593,405 @@
                 const sanitizedId = round.id.replace(/[^a-zA-Z0-9]/g, '-');
                 
                 const tabButton = document.createElement('div'); // Change to div to hold button and icon
-                tabButton.className = 'flex items-center gap-2 text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2';
+                tabButton.className = 'flex items-center gap-2 text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border-l-4 border-l-transparent';
                 tabButton.setAttribute('role', 'tab');
                 tabButton.setAttribute('id', `tab-${sanitizedId}`);
                 tabButton.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
                 tabButton.setAttribute('aria-controls', `panel-${sanitizedId}`);
+                tabButton.addEventListener('click', () => showTab(`tab-${sanitizedId}`));
 
-                // Make the round name editable
                 const nameSpan = document.createElement('span');
-                nameSpan.setAttribute('contenteditable', 'true');
-                nameSpan.setAttribute('data-round-key', round.name);
                 nameSpan.innerText = round.name;
+                nameSpan.contentEditable = true;
+                nameSpan.className = 'flex-grow px-2 py-1 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500';
+                nameSpan.dataset.roundKey = round.name; // Store original key
                 nameSpan.addEventListener('blur', saveRoundName);
-                nameSpan.addEventListener('click', (e) => e.stopPropagation()); // Prevent click on span from propagating to delete button
-                
-                // Add the delete button
-                const deleteButton = document.createElement('button');
-                deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                  <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.333.576L2.25 5.116A2.25 2.25 0 0 0 2 7.25v2.25A2.25 2.25 0 0 0 4.25 11.75h1.75a.75.75 0 0 1 0 1.5H4.25a.75.75 0 0 0 0 1.5h1.75a.75.75 0 0 1 0 1.5H4.25A2.25 2.25 0 0 0 2 18.25v.25c0 .414.336.75.75.75h14.5a.75.75 0 0 0 .75-.75v-.25a2.25 2.25 0 0 0-2.25-2.25H13.5a.75.75 0 0 1 0-1.5h1.75a.75.75 0 0 0 0-1.5h-1.75a.75.75 0 0 1 0-1.5h1.75A2.25 2.25 0 0 0 18 9.5v-2.25a2.25 2.25 0 0 0-.917-1.833l-1.417-.514c-.753-.301-1.538-.499-2.333-.576V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM3.75 7.5h12.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75v-1.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" />
-                </svg>
-                `;
-                deleteButton.title = `Delete ${round.name}`;
-                deleteButton.className = `p-1 rounded-full text-red-500 hover:text-white hover:bg-red-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2`;
-                deleteButton.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Stop the tab from activating
-                    deleteRound(round.name);
+                nameSpan.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.target.blur();
+                    }
                 });
-                
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-100';
+                deleteBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.332.594a.75.75 0 0 0-.786 1.232l1.57.878A4.502 4.502 0 0 1 10 4.5a4.502 4.502 0 0 1 5.348 2.373l1.57-.878a.75.75 0 0 0-.786-1.232A12.75 12.75 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 12.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 .75-.75Zm.75-6.75a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm-5 0a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm10.5.5a.75.75 0 0 1 0-1.5h.5a.75.75 0 0 1 0 1.5h-.5Z" clip-rule="evenodd" />
+                    </svg>
+                `;
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteRound(round.id);
+                });
+
                 tabButton.appendChild(nameSpan);
-                tabButton.appendChild(deleteButton);
-                tabButton.addEventListener('click', () => showTab(tabButton.id));
+                tabButton.appendChild(deleteBtn);
                 tabList.appendChild(tabButton);
 
-                const panelDiv = document.createElement('div');
-                panelDiv.setAttribute('id', `panel-${sanitizedId}`);
-                panelDiv.setAttribute('role', 'tabpanel');
-                panelDiv.setAttribute('tabindex', '0');
-                panelDiv.className = `overflow-x-auto rounded-lg border border-gray-200 ${index !== 0 ? 'hidden' : ''}`;
-                panelDiv.innerHTML = `
-                    <table id="matchDataTable-${sanitizedId}" class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <!-- Match data will be populated here by JavaScript -->
-                        </tbody>
-                    </table>
-                `;
-                tabPanels.appendChild(panelDiv);
-            });
-        };
-
-        const showTab = (tabId) => {
-            const currentActiveTab = document.querySelector('[role="tab"][aria-selected="true"]');
-            if (currentActiveTab) {
-                currentActiveTab.setAttribute('aria-selected', 'false');
-                const currentPanelId = currentActiveTab.getAttribute('aria-controls');
-                const currentPanel = document.getElementById(currentPanelId);
-                currentPanel.classList.add('hidden');
-            }
-
-            const newActiveTab = document.getElementById(tabId);
-            if (!newActiveTab) return;
-            const newPanelId = newActiveTab.getAttribute('aria-controls');
-            const newPanel = document.getElementById(newPanelId);
-
-            newActiveTab.setAttribute('aria-selected', 'true');
-            newPanel.classList.remove('hidden');
-            
-            // Get the actual round name from the data attribute on the span
-            const roundName = newActiveTab.querySelector('span').dataset.roundKey;
-
-            showLoadingSpinner(); // Show spinner when switching tabs
-            updateInfographic(roundName);
-        };
-
-        const updateInfographic = (roundId) => {
-            if (unsubscribeMatchData) {
-                unsubscribeMatchData();
-            }
-            if (!db) {
-                console.error("Firebase database (db) is not initialized for updateInfographic.");
-                return;
-            }
-            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
-            const roundRef = ref(db, `${databasePath}/${roundId}`);
-            unsubscribeMatchData = onValue(roundRef, (snapshot) => {
-                const data = snapshot.val();
-                const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
-                if (tableBody) tableBody.innerHTML = '';
-                if (data && data.matches) {
-                    const matches = data.matches;
-                    matches.forEach((match) => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.scoreA}</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.scoreB}</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerB}</td>
-                        `;
-                        row.addEventListener('blur', (e) => saveMatchData(roundId), true);
-                        if (tableBody) tableBody.appendChild(row);
-                    });
-                    
-                    const processedData = processMatchData(matches);
-                    populateLeaderboard(processedData.playerData);
-                    populateHeadToHead(processedData.headToHead);
-                    populateMostDominantWin(processedData.mostDominantWin);
-                    renderCharts(processedData.playerData);
-                } else if (tableBody) {
-                    // No data, show an empty table or a message
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td colspan="4" class="px-6 py-4 text-center text-gray-500">No matches found.</td>`;
-                    tableBody.appendChild(row);
-                    populateLeaderboard([]);
-                    populateHeadToHead({});
-                    populateMostDominantWin({});
-                    renderCharts([]);
-                }
-                hideLoadingSpinner();
-            }, (error) => {
-                console.error("Error fetching match data:", error);
-                hideLoadingSpinner();
+                const panel = document.createElement('div');
+                panel.className = 'hidden space-y-8';
+                panel.setAttribute('role', 'tabpanel');
+                panel.setAttribute('id', `panel-${sanitizedId}`);
+                panel.setAttribute('aria-labelledby', `tab-${sanitizedId}`);
+                tabPanels.appendChild(panel);
+                
+                // Real-time listener for each round's matches
+                onValue(ref(db, `${databasePath}/${round.id}/matches`), (snapshot) => {
+                    const matches = snapshot.val() || [];
+                    updateMatchData(round.id, matches);
+                });
             });
         };
         
-        const saveMatchData = async (roundId) => {
-            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
-            const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
-            const rows = tableBody.querySelectorAll('tr');
-            const matches = [];
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length === 4) {
-                    matches.push({
-                        playerA: cells[0].innerText.trim(),
-                        scoreA: parseInt(cells[1].innerText, 10) || 0,
-                        scoreB: parseInt(cells[2].innerText, 10) || 0,
-                        playerB: cells[3].innerText.trim()
-                    });
-                }
+        const showTab = (tabId) => {
+            document.querySelectorAll('[role="tab"]').forEach(tab => {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
             });
+            document.querySelectorAll('[role="tabpanel"]').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            const tabButton = document.getElementById(tabId);
+            const panelId = tabButton.getAttribute('aria-controls');
+            const panel = document.getElementById(panelId);
+            tabButton.classList.add('active');
+            tabButton.setAttribute('aria-selected', 'true');
+            panel.classList.remove('hidden');
+        };
 
+        const updateMatchData = (roundId, matches) => {
+            const sanitizedId = roundId.replace(/[^a-zA-Z0-9]/g, '-');
+            const panel = document.getElementById(`panel-${sanitizedId}`);
+            if (!panel) return;
+
+            panel.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">Match List for ${roundId}</h3>
+                    <button id="addMatchBtn-${sanitizedId}" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-xl transition-all hover:bg-blue-600 active:scale-95 text-sm">
+                        + Add Match
+                    </button>
+                </div>
+                <div id="matchesContainer-${sanitizedId}" class="space-y-4"></div>
+            `;
+            
+            const addMatchBtn = document.getElementById(`addMatchBtn-${sanitizedId}`);
+            if(addMatchBtn) {
+                addMatchBtn.addEventListener('click', () => addMatch(roundId));
+            }
+
+            const matchesContainer = document.getElementById(`matchesContainer-${sanitizedId}`);
+            matches.forEach((match, index) => {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'bg-white rounded-xl shadow p-4 flex flex-col md:flex-row items-center gap-4';
+                matchDiv.innerHTML = `
+                    <div class="flex-1 w-full flex items-center gap-2">
+                        <span contenteditable="true" data-player-id="A" class="flex-1 px-2 py-1 rounded-md bg-blue-100 text-blue-800 font-medium text-center hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">${match.playerA}</span>
+                        <input type="number" data-score-id="A" value="${match.scoreA}" class="w-16 text-center border rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <span class="text-gray-500 font-bold text-lg md:text-xl">-</span>
+                    <div class="flex-1 w-full flex items-center gap-2">
+                        <input type="number" data-score-id="B" value="${match.scoreB}" class="w-16 text-center border rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <span contenteditable="true" data-player-id="B" class="flex-1 px-2 py-1 rounded-md bg-purple-100 text-purple-800 font-medium text-center hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors">${match.playerB}</span>
+                    </div>
+                    <button class="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-100" data-match-index="${index}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.275-2.332.594a.75.75 0 0 0-.786 1.232l1.57.878A4.502 4.502 0 0 1 10 4.5a4.502 4.502 0 0 1 5.348 2.373l1.57-.878a.75.75 0 0 0-.786-1.232A12.75 12.75 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 12.5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 .75-.75Zm.75-6.75a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm-5 0a.75.75 0 0 0-1.5 0v.5a.75.75 0 0 0 1.5 0v-.5Zm10.5.5a.75.75 0 0 1 0-1.5h.5a.75.75 0 0 1 0 1.5h-.5Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                `;
+                matchesContainer.appendChild(matchDiv);
+
+                const playerAInput = matchDiv.querySelector('[data-player-id="A"]');
+                const scoreAInput = matchDiv.querySelector('[data-score-id="A"]');
+                const playerBInput = matchDiv.querySelector('[data-player-id="B"]');
+                const scoreBInput = matchDiv.querySelector('[data-score-id="B"]');
+                const deleteButton = matchDiv.querySelector('button[data-match-index]');
+                
+                playerAInput.addEventListener('blur', (e) => saveMatchData(roundId, index, 'playerA', e.target.innerText));
+                scoreAInput.addEventListener('change', (e) => saveMatchData(roundId, index, 'scoreA', parseInt(e.target.value, 10) || 0));
+                playerBInput.addEventListener('blur', (e) => saveMatchData(roundId, index, 'playerB', e.target.innerText));
+                scoreBInput.addEventListener('change', (e) => saveMatchData(roundId, index, 'scoreB', parseInt(e.target.value, 10) || 0));
+                deleteButton.addEventListener('click', () => deleteMatch(roundId, index));
+            });
+        };
+
+        const saveMatchData = async (roundId, index, field, value) => {
+            showLoadingSpinner();
             try {
-                await set(ref(db, `${databasePath}/${roundId}/matches`), matches);
-                console.log("Match data saved to Realtime Database!");
+                const matchRef = ref(db, `${databasePath}/${roundId}/matches/${index}`);
+                await get(matchRef).then(async (snapshot) => {
+                    if (snapshot.exists()) {
+                        const currentData = snapshot.val();
+                        currentData[field] = value;
+                        await set(matchRef, currentData);
+                        console.log(`Match ${index} in ${roundId} updated.`);
+                    }
+                });
             } catch (e) {
-                console.error("Error writing data: ", e);
+                console.error("Error saving match data:", e);
+                showMessage("Error saving data.", "error");
+            } finally {
+                hideLoadingSpinner();
             }
         };
 
-        // --- Chart & Leaderboard Logic (updated) ---
-        let winLossChart, gamesPlayedChart, pointDifferentialChart, averageScoreChart;
-
-        const renderCharts = (data) => {
-            if (winLossChart) winLossChart.destroy();
-            if (gamesPlayedChart) gamesPlayedChart.destroy();
-            if (pointDifferentialChart) pointDifferentialChart.destroy();
-            if (averageScoreChart) averageScoreChart.destroy();
-            
-            createWinLossChart(data);
-            createGamesPlayedChart(data);
-            createPointDifferentialChart(data);
-            createAverageScoreChart(data);
-        };
-
-        const processMatchData = (matches) => {
-            const players = {};
+        const updateOverallStats = (allRoundsData) => {
+            const playerStats = {};
             const headToHead = {};
             let mostDominantWin = null;
 
-            matches.forEach(match => {
-                const { playerA, scoreA, scoreB, playerB } = match;
+            allRoundsData.forEach(round => {
+                if (round.matches) {
+                    round.matches.forEach(match => {
+                        const { playerA, scoreA, playerB, scoreB } = match;
 
-                if (!players[playerA]) players[playerA] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
-                if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                        const pointsDiff = Math.abs(scoreA - scoreB);
+                        if (!mostDominantWin || pointsDiff > mostDominantWin.diff) {
+                            mostDominantWin = {
+                                round: round.name,
+                                winner: scoreA > scoreB ? playerA : playerB,
+                                loser: scoreA > scoreB ? playerB : playerA,
+                                score: `${Math.max(scoreA, scoreB)} - ${Math.min(scoreA, scoreB)}`,
+                                diff: pointsDiff
+                            };
+                        }
 
-                // Head-to-Head tracking
-                const key = [playerA, playerB].sort().join(' vs ');
-                if (!headToHead[key]) headToHead[key] = { playerA: playerA, playerB: playerB, winsA: 0, winsB: 0 };
+                        [playerA, playerB].forEach(player => {
+                            if (!playerStats[player]) {
+                                playerStats[player] = { wins: 0, losses: 0, games: 0, totalScore: 0, totalOpponentScore: 0 };
+                            }
+                        });
 
-                // Update wins and losses
-                if (scoreA > scoreB) { 
-                    players[playerA].wins++; 
-                    players[playerB].losses++; 
-                    if (headToHead[key].playerA === playerA) headToHead[key].winsA++; else headToHead[key].winsB++;
-                } else if (scoreB > scoreA) { 
-                    players[playerB].wins++; 
-                    players[playerA].losses++; 
-                    if (headToHead[key].playerB === playerB) headToHead[key].winsB++; else headToHead[key].winsA++;
+                        playerStats[playerA].games++;
+                        playerStats[playerB].games++;
+                        playerStats[playerA].totalScore += scoreA;
+                        playerStats[playerB].totalScore += scoreB;
+                        playerStats[playerA].totalOpponentScore += scoreB;
+                        playerStats[playerB].totalOpponentScore += scoreA;
+                        
+                        if (scoreA > scoreB) {
+                            playerStats[playerA].wins++;
+                            playerStats[playerB].losses++;
+                        } else if (scoreB > scoreA) {
+                            playerStats[playerB].wins++;
+                            playerStats[playerA].losses++;
+                        }
+
+                        // Update head-to-head
+                        const players = [playerA, playerB].sort();
+                        const key = `${players[0]}-${players[1]}`;
+                        if (!headToHead[key]) {
+                            headToHead[key] = { p1: players[0], p2: players[1], p1Wins: 0, p2Wins: 0 };
+                        }
+                        if (playerA > playerB) {
+                            if (scoreA > scoreB) headToHead[key].p1Wins++;
+                            if (scoreB > scoreA) headToHead[key].p2Wins++;
+                        } else {
+                            if (scoreA > scoreB) headToHead[key].p2Wins++;
+                            if (scoreB > scoreA) headToHead[key].p1Wins++;
+                        }
+                    });
                 }
-
-                // Update points
-                players[playerA].pointsScored += scoreA;
-                players[playerA].pointsAgainst += scoreB;
-                players[playerB].pointsScored += scoreB;
-                players[playerB].pointsAgainst += scoreA;
-
-                // Check for most dominant win
-                const pointDifference = Math.abs(scoreA - scoreB);
-                if (!mostDominantWin || pointDifference > mostDominantWin.pointDifference) {
-                    mostDominantWin = {
-                        winner: scoreA > scoreB ? playerA : playerB,
-                        loser: scoreA > scoreB ? playerB : playerA,
-                        score: scoreA > scoreB ? `${scoreA}-${scoreB}` : `${scoreB}-${scoreA}`,
-                        pointDifference: pointDifference
-                    };
-                }
             });
 
-            const playerData = Object.keys(players).map(name => {
-                const player = players[name];
-                const gamesPlayed = player.wins + player.losses;
-                const winPercentage = gamesPlayed > 0 ? (player.wins / gamesPlayed) * 100 : 0;
-                const pointDifferential = player.pointsScored - player.pointsAgainst;
-                const avgScorePerGame = gamesPlayed > 0 ? (player.pointsScored / gamesPlayed) : 0;
-                return { name, wins: player.wins, losses: player.losses, gamesPlayed, winPercentage, pointDifferential, avgScorePerGame };
-            });
-
-            playerData.sort((a, b) => {
-                if (a.wins !== b.wins) return b.wins - a.wins;
-                return b.pointDifferential - a.pointDifferential;
-            });
-
-            return { playerData, headToHead, mostDominantWin };
+            // Calculate final stats and sort leaderboard
+            const leaderboardData = Object.keys(playerStats).map(player => {
+                const stats = playerStats[player];
+                const winPercentage = stats.games > 0 ? (stats.wins / stats.games) * 100 : 0;
+                const avgScore = stats.games > 0 ? stats.totalScore / stats.games : 0;
+                const pointDiff = stats.totalScore - stats.totalOpponentScore;
+                return {
+                    player,
+                    ...stats,
+                    winPercentage: winPercentage.toFixed(1),
+                    avgScore: avgScore.toFixed(1),
+                    pointDiff
+                };
+            }).sort((a, b) => b.wins - a.wins || b.pointDiff - a.pointDiff);
+            
+            renderLeaderboard(leaderboardData);
+            renderMostDominantWin(mostDominantWin);
+            renderHeadToHead(headToHead);
+            renderCharts(leaderboardData);
         };
 
-        const populateLeaderboard = (data) => {
-            const leaderboardBody = document.getElementById('leaderboardBody');
-            leaderboardBody.innerHTML = '';
+        const renderLeaderboard = (data) => {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-500">No matches played yet.</td></tr>';
+                return;
+            }
             data.forEach((player, index) => {
                 const row = document.createElement('tr');
+                row.className = 'text-sm text-gray-700 hover:bg-gray-50 transition-colors';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${player.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.wins}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.losses}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.gamesPlayed}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.winPercentage.toFixed(1)}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.avgScorePerGame.toFixed(2)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.pointDifferential}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-medium">${player.player}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.wins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.losses}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.games}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.winPercentage}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.avgScore}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${player.pointDiff}</td>
                 `;
-                leaderboardBody.appendChild(row);
+                tbody.appendChild(row);
             });
         };
 
-        const populateHeadToHead = (data) => {
-            const headToHeadBody = document.getElementById('headToHeadBody');
-            headToHeadBody.innerHTML = '';
-            
-            for (const key in data) {
-                const match = data[key];
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerB}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.winsA}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.winsB}</td>
-                `;
-                headToHeadBody.appendChild(row);
-            }
-        };
-
-        const populateMostDominantWin = (data) => {
+        const renderMostDominantWin = (dominantWin) => {
             const container = document.getElementById('mostDominantWinContainer');
             container.innerHTML = '';
-            if (data && data.winner) {
-                container.innerHTML = `
-                    <p class="text-3xl font-bold text-blue-500 mb-1">${data.winner}</p>
-                    <p class="text-gray-600 mb-2">Defeated ${data.loser}</p>
-                    <p class="text-xl font-semibold text-gray-800">${data.score}</p>
-                    <p class="text-sm text-gray-500 mt-2">(A difference of ${data.pointDifference} points)</p>
-                `;
-            } else {
-                container.innerHTML = `<p class="text-gray-500">No matches played yet.</p>`;
+            if (!dominantWin) {
+                container.innerHTML = `<p class="text-gray-500">No matches recorded yet.</p>`;
+                return;
             }
+            container.innerHTML = `
+                <p class="text-3xl font-bold text-gray-800 mb-2">${dominantWin.winner}</p>
+                <p class="text-lg text-gray-600 mb-4">defeated ${dominantWin.loser}</p>
+                <div class="inline-flex items-center gap-2 bg-green-500 text-white font-bold text-xl px-4 py-2 rounded-full shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-11.25a.75.75 0 0 0-1.5 0v4.59L7.3 9.22a.75.75 0 0 0-1.06 1.06l3.25 3.25a.75.75 0 0 0 1.06 0l3.25-3.25a.75.75 0 1 0-1.06-1.06l-1.97 1.97V6.75Z" clip-rule="evenodd" />
+                    </svg>
+                    <span>${dominantWin.score}</span>
+                </div>
+                <p class="text-sm text-gray-400 mt-2">In ${dominantWin.round}</p>
+            `;
         };
 
-        const createWinLossChart = (data) => {
-            const ctx = document.getElementById('winLossChart').getContext('2d');
-            winLossChart = new Chart(ctx, {
+        const renderHeadToHead = (data) => {
+            const tbody = document.getElementById('headToHeadBody');
+            tbody.innerHTML = '';
+            const dataArray = Object.values(data);
+            if (dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Not enough data.</td></tr>';
+                return;
+            }
+            dataArray.forEach(record => {
+                const row = document.createElement('tr');
+                row.className = 'text-sm text-gray-700 hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${record.p1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${record.p2}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${record.p1Wins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${record.p2Wins}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        };
+
+        const renderCharts = (data) => {
+            const players = data.map(p => p.player);
+            
+            // Re-use chart instances to avoid memory leaks
+            const destroyChart = (chartId) => {
+                if (chartInstances[chartId]) {
+                    chartInstances[chartId].destroy();
+                }
+            };
+            
+            // Win/Loss Chart
+            destroyChart('winLossChart');
+            const winLossCtx = document.getElementById('winLossChart').getContext('2d');
+            chartInstances.winLossChart = new Chart(winLossCtx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(p => p.name),
+                    labels: players,
                     datasets: [
-                        { label: 'Wins', data: data.map(p => p.wins), backgroundColor: 'rgba(59, 130, 246, 0.8)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 },
-                        { label: 'Losses', data: data.map(p => p.losses), backgroundColor: 'rgba(239, 68, 68, 0.8)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 }
+                        {
+                            label: 'Wins',
+                            data: data.map(p => p.wins),
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Losses',
+                            data: data.map(p => p.losses),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderRadius: 8
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Games' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: { legend: { display: true } }
+                }
             });
-        };
 
-        const createGamesPlayedChart = (data) => {
-            const ctx = document.getElementById('gamesPlayedChart').getContext('2d');
-            gamesPlayedChart = new Chart(ctx, {
+            // Games Played Chart
+            destroyChart('gamesPlayedChart');
+            const gamesPlayedCtx = document.getElementById('gamesPlayedChart').getContext('2d');
+            chartInstances.gamesPlayedChart = new Chart(gamesPlayedCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: data.map(p => p.name),
+                    labels: players,
                     datasets: [{
-                        data: data.map(p => p.gamesPlayed),
-                        backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(34, 197, 94, 0.8)', 'rgba(99, 102, 241, 0.8)', 'rgba(163, 230, 53, 0.8)'],
-                        borderColor: '#fff',
-                        borderWidth: 2
+                        label: 'Games Played',
+                        data: data.map(p => p.games),
+                        backgroundColor: ['#2563EB', '#8B5CF6', '#F97316', '#10B981', '#3B82F6'],
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, title: { display: false } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
             });
-        };
-
-        const createPointDifferentialChart = (data) => {
-            const ctx = document.getElementById('pointDifferentialChart').getContext('2d');
-            pointDifferentialChart = new Chart(ctx, {
+            
+            // Point Differential Chart
+            destroyChart('pointDifferentialChart');
+            const pointDiffCtx = document.getElementById('pointDifferentialChart').getContext('2d');
+            chartInstances.pointDifferentialChart = new Chart(pointDiffCtx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(p => p.name),
+                    labels: players,
                     datasets: [{
                         label: 'Point Differential',
-                        data: data.map(p => p.pointDifferential),
-                        backgroundColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
-                        borderColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
-                        borderWidth: 1
+                        data: data.map(p => p.pointDiff),
+                        backgroundColor: data.map(p => p.pointDiff >= 0 ? 'rgba(59, 130, 246, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                        borderRadius: 8
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Point Difference' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
             });
-        };
-        
-        const createAverageScoreChart = (data) => {
-            const ctx = document.getElementById('averageScoreChart').getContext('2d');
-            averageScoreChart = new Chart(ctx, {
-                type: 'bar',
+
+            // Average Score Chart
+            destroyChart('averageScoreChart');
+            const avgScoreCtx = document.getElementById('averageScoreChart').getContext('2d');
+            chartInstances.averageScoreChart = new Chart(avgScoreCtx, {
+                type: 'line',
                 data: {
-                    labels: data.map(p => p.name),
+                    labels: players,
                     datasets: [{
-                        label: 'Avg Score per Game',
-                        data: data.map(p => p.avgScorePerGame),
-                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                        borderColor: 'rgba(245, 158, 11, 1)',
-                        borderWidth: 1
+                        label: 'Average Score per Game',
+                        data: data.map(p => p.avgScore),
+                        borderColor: '#22C55E',
+                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                        fill: true,
+                        tension: 0.4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Average Score' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false } }
+                }
             });
         };
 
-        // Initialize Firebase on window load
-        window.onload = initializeFirebase;
+        // Initialize Firebase when the window loads
+        window.addEventListener('load', initializeFirebase);
     </script>
-
 </body>
 </html>
