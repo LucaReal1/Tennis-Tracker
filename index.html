@@ -19,9 +19,12 @@
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Sanitize the appId to ensure it does not contain characters forbidden by Firebase Realtime Database
+        const sanitizedAppId = appId.replace(/[.#$\[\]]/g, '_');
 
         // Use a simple, top-level key for Realtime Database.
-        const databasePath = `tennisRounds`;
+        const databasePath = `artifacts/${sanitizedAppId}/public/data/tennisRounds`;
 
         let db, auth, userId;
         let unsubscribeMatchData;
@@ -131,7 +134,9 @@
                             createRoundContainer.style.display = 'none';
                             addNewRoundContainer.style.display = 'block';
                             populateTabs(roundsArray);
-                            showTab(`tab-${roundsArray[0].id}`);
+                            // Show the first tab after populating
+                            const firstTabId = `tab-${roundsArray[0].id.replace(' ', '-')}`;
+                            showTab(firstTabId);
                         } else {
                             createRoundContainer.style.display = 'block';
                             addNewRoundContainer.style.display = 'none';
@@ -169,23 +174,24 @@
             tabPanels.innerHTML = '';
 
             rounds.sort((a, b) => parseInt(a.name.replace('Round ', '')) - parseInt(b.name.replace('Round ', ''))).forEach((round, index) => {
+                const sanitizedId = round.id.replace(' ', '-');
                 const tabButton = document.createElement('button');
                 tabButton.setAttribute('role', 'tab');
-                tabButton.setAttribute('id', `tab-${round.id}`);
+                tabButton.setAttribute('id', `tab-${sanitizedId}`);
                 tabButton.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
-                tabButton.setAttribute('aria-controls', `panel-${round.id}`);
+                tabButton.setAttribute('aria-controls', `panel-${sanitizedId}`);
                 tabButton.className = 'text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
                 tabButton.innerText = round.name;
                 tabButton.addEventListener('click', () => showTab(tabButton.id));
                 tabList.appendChild(tabButton);
 
                 const panelDiv = document.createElement('div');
-                panelDiv.setAttribute('id', `panel-${round.id}`);
+                panelDiv.setAttribute('id', `panel-${sanitizedId}`);
                 panelDiv.setAttribute('role', 'tabpanel');
                 panelDiv.setAttribute('tabindex', '0');
                 panelDiv.className = `overflow-x-auto rounded-lg border border-gray-200 ${index !== 0 ? 'hidden' : ''}`;
                 panelDiv.innerHTML = `
-                    <table id="matchDataTable-${round.id}" class="min-w-full divide-y divide-gray-200">
+                    <table id="matchDataTable-${sanitizedId}" class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
@@ -220,7 +226,7 @@
             newActiveTab.setAttribute('aria-selected', 'true');
             newPanel.classList.remove('hidden');
 
-            const roundId = newActiveTab.id.replace('tab-', '');
+            const roundId = newActiveTab.id.replace('tab-', '').replace('-', ' ');
             showLoadingSpinner(); // Show spinner when switching tabs
             updateInfographic(roundId);
         };
@@ -233,13 +239,13 @@
                 console.error("Firebase database (db) is not initialized for updateInfographic.");
                 return;
             }
-
+            const sanitizedId = roundId.replace(' ', '-');
             const roundRef = ref(db, `${databasePath}/${roundId}`);
             unsubscribeMatchData = onValue(roundRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.matches) {
                     const matches = data.matches;
-                    const tableBody = document.querySelector(`#matchDataTable-${roundId} tbody`);
+                    const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
                     tableBody.innerHTML = '';
                     matches.forEach(match => {
                         const row = document.createElement('tr');
@@ -265,7 +271,8 @@
         };
         
         const saveMatchData = async (roundId) => {
-            const tableBody = document.querySelector(`#matchDataTable-${roundId} tbody`);
+            const sanitizedId = roundId.replace(' ', '-');
+            const tableBody = document.querySelector(`#matchDataTable-${sanitizedId} tbody`);
             const rows = tableBody.querySelectorAll('tr');
             const matches = [];
 
