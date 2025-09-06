@@ -1,174 +1,344 @@
-<!DOCTYPE HTML>
-<!--
-	Spectral by HTML5 UP
-	html5up.net | @ajlkn
-	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
-<html>
-	<head>
-		<title>Spectral by HTML5 UP</title>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
-	</head>
-	<body class="landing is-preload">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends Tennis League Showdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            max-height: 50vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
 
-		<!-- Page Wrapper -->
-			<div id="page-wrapper">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-black text-blue-600 tracking-tight">FRIENDS TENNIS LEAGUE</h1>
+            <p class="text-lg text-gray-600 mt-2">The Official Leaderboard & Performance Analytics</p>
+        </header>
 
-				<!-- Header -->
-					<header id="header" class="alt">
-						<h1><a href="index.html">Spectral</a></h1>
-						<nav id="nav">
-							<ul>
-								<li class="special">
-									<a href="#menu" class="menuToggle"><span>Menu</span></a>
-									<div id="menu">
-										<ul>
-											<li><a href="index.html">Home</a></li>
-											<li><a href="generic.html">Generic</a></li>
-											<li><a href="elements.html">Elements</a></li>
-											<li><a href="#">Sign Up</a></li>
-											<li><a href="#">Log In</a></li>
-										</ul>
-									</div>
-								</li>
-							</ul>
-						</nav>
-					</header>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-				<!-- Banner -->
-					<section id="banner">
-						<div class="inner">
-							<h2>Spectral</h2>
-							<p>Another fine responsive<br />
-							site template freebie<br />
-							crafted by <a href="http://html5up.net">HTML5 UP</a>.</p>
-							<ul class="actions special">
-								<li><a href="#" class="button primary">Activate</a></li>
-							</ul>
-						</div>
-						<a href="#one" class="more scrolly">Learn More</a>
-					</section>
+            <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-700">Current Standings</h2>
+                <p class="text-gray-600 mb-6">Who's dominating the court? The win rate chart shows the current rankings based on overall performance. The higher the bar, the more formidable the player.</p>
+                <div class="chart-container mx-auto max-w-5xl">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+            </div>
 
-				<!-- One -->
-					<section id="one" class="wrapper style1 special">
-						<div class="inner">
-							<header class="major">
-								<h2>Arcu aliquet vel lobortis ata nisl<br />
-								eget augue amet aliquet nisl cep donec</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum. Donec amet imperdiet eleifend<br />
-								fringilla tincidunt. Nullam dui leo Aenean mi ligula, rhoncus ullamcorper.</p>
-							</header>
-							<ul class="icons major">
-								<li><span class="icon fa-gem major style1"><span class="label">Lorem</span></span></li>
-								<li><span class="icon fa-heart major style2"><span class="label">Ipsum</span></span></li>
-								<li><span class="icon solid fa-code major style3"><span class="label">Dolor</span></span></li>
-							</ul>
-						</div>
-					</section>
+            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                 <h2 class="text-2xl font-bold mb-4 text-gray-700">King of the Court</h2>
+                 <p class="text-gray-600 mb-6">All hail the current leader! With an impressive performance, Luca R is the player to beat.</p>
+                <div class="chart-container w-full max-w-xs h-auto relative">
+                    <canvas id="topPlayerChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-5xl font-black text-green-500">80%</span>
+                        <span class="text-sm font-semibold text-gray-600">Win Rate</span>
+                    </div>
+                </div>
+            </div>
 
-				<!-- Two -->
-					<section id="two" class="wrapper alt style2">
-						<section class="spotlight">
-							<div class="image"><img src="images/pic01.jpg" alt="" /></div><div class="content">
-								<h2>Magna primis lobortis<br />
-								sed ullamcorper</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum. Donec hendrerit imperdiet. Mauris eleifend fringilla nullam aenean mi ligula.</p>
-							</div>
-						</section>
-						<section class="spotlight">
-							<div class="image"><img src="images/pic02.jpg" alt="" /></div><div class="content">
-								<h2>Tortor dolore feugiat<br />
-								elementum magna</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum. Donec hendrerit imperdiet. Mauris eleifend fringilla nullam aenean mi ligula.</p>
-							</div>
-						</section>
-						<section class="spotlight">
-							<div class="image"><img src="images/pic03.jpg" alt="" /></div><div class="content">
-								<h2>Augue eleifend aliquet<br />
-								sed condimentum</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum. Donec hendrerit imperdiet. Mauris eleifend fringilla nullam aenean mi ligula.</p>
-							</div>
-						</section>
-					</section>
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-700">Player Playstyles</h2>
+                <p class="text-gray-600 mb-6">This chart maps out offensive power (Points Scored) versus defensive resilience (Points Against). Players in the top-left are high-scoring attackers who may concede points, while those in the bottom-right are defensive walls.</p>
+                <div class="chart-container mx-auto max-w-3xl">
+                    <canvas id="scatterPlot"></canvas>
+                </div>
+            </div>
 
-				<!-- Three -->
-					<section id="three" class="wrapper style3 special">
-						<div class="inner">
-							<header class="major">
-								<h2>Accumsan mus tortor nunc aliquet</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum. Donec amet imperdiet eleifend<br />
-								fringilla tincidunt. Nullam dui leo Aenean mi ligula, rhoncus ullamcorper.</p>
-							</header>
-							<ul class="features">
-								<li class="icon fa-paper-plane">
-									<h3>Arcu accumsan</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-								<li class="icon solid fa-laptop">
-									<h3>Ac Augue Eget</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-								<li class="icon solid fa-code">
-									<h3>Mus Scelerisque</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-								<li class="icon solid fa-headphones-alt">
-									<h3>Mauris Imperdiet</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-								<li class="icon fa-heart">
-									<h3>Aenean Primis</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-								<li class="icon fa-flag">
-									<h3>Tortor Ut</h3>
-									<p>Augue consectetur sed interdum imperdiet et ipsum. Mauris lorem tincidunt nullam amet leo Aenean ligula consequat consequat.</p>
-								</li>
-							</ul>
-						</div>
-					</section>
+            <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                 <h2 class="text-2xl font-bold mb-4 text-gray-700">Match Performance Breakdown</h2>
+                 <p class="text-gray-600 mb-6">Every match tells a story. This stacked bar chart visualizes the total matches played by each person, clearly breaking down their wins and losses. It's a true measure of experience and success on the court.</p>
+                 <div class="chart-container mx-auto max-w-5xl">
+                    <canvas id="stackedBarChart"></canvas>
+                </div>
+            </div>
+            
+             <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-2xl font-bold mb-4 text-gray-700">Point Differential Leaders</h2>
+                <p class="text-gray-600 mb-6">It's not just about winning, but by how much. The point differential shows who truly dominates their matches. A higher positive number indicates more decisive victories.</p>
+                <div class="w-full space-y-4">
+                    <div id="pointDiffList"></div>
+                </div>
+            </div>
 
-				<!-- CTA -->
-					<section id="cta" class="wrapper style4">
-						<div class="inner">
-							<header>
-								<h2>Arcue ut vel commodo</h2>
-								<p>Aliquam ut ex ut augue consectetur interdum endrerit imperdiet amet eleifend fringilla.</p>
-							</header>
-							<ul class="actions stacked">
-								<li><a href="#" class="button fit primary">Activate</a></li>
-								<li><a href="#" class="button fit">Learn More</a></li>
-							</ul>
-						</div>
-					</section>
+        </main>
+    </div>
 
-				<!-- Footer -->
-					<footer id="footer">
-						<ul class="icons">
-							<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-							<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-							<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-							<li><a href="#" class="icon brands fa-dribbble"><span class="label">Dribbble</span></a></li>
-							<li><a href="#" class="icon solid fa-envelope"><span class="label">Email</span></a></li>
-						</ul>
-						<ul class="copyright">
-							<li>&copy; Untitled</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-						</ul>
-					</footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-			</div>
+    const palette = {
+        orange: '#FF5733',
+        green: '#33FF57',
+        blue: '#3357FF',
+        pink: '#FF33A1',
+        yellow: '#F1C40F',
+        purple: '#9B59B6',
+        lightGray: '#e5e7eb',
+        darkGray: '#4b5563',
+    };
 
-		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+    const playerData = [
+        { name: 'Luca R', wins: 10000, losses: 2, pointsScored: 120, pointsAgainst: 85 },
+        { name: 'Marcello', wins: 7, losses: 3, pointsScored: 115, pointsAgainst: 90 },
+        { name: 'Giacomo', wins: 6, losses: 4, pointsScored: 100, pointsAgainst: 105 },
+        { name: 'Fabrizio', wins: 4, losses: 6, pointsScored: 95, pointsAgainst: 110 },
+        { name: 'Marco', wins: 3, losses: 7, pointsScored: 90, pointsAgainst: 118 },
+        { name: 'Luca C', wins: 2, losses: 8, pointsScored: 80, pointsAgainst: 122 },
+    ];
 
-	</body>
+    playerData.forEach(p => {
+        p.matchesPlayed = p.wins + p.losses;
+        p.winRate = p.matchesPlayed > 0 ? (p.wins / p.matchesPlayed) * 100 : 0;
+        p.pointDifferential = p.pointsScored - p.pointsAgainst;
+    });
+
+    playerData.sort((a, b) => b.winRate - a.winRate);
+    
+    const wrapLabel = (label) => {
+        const maxLen = 16;
+        if (label.length <= maxLen) return label;
+        const words = label.split(' ');
+        const lines = [];
+        let currentLine = '';
+        for (const word of words) {
+            if ((currentLine + ' ' + word).trim().length > maxLen) {
+                lines.push(currentLine.trim());
+                currentLine = word;
+            } else {
+                currentLine = (currentLine + ' ' + word).trim();
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+    };
+    
+    const tooltipTitleCallback = (tooltipItems) => {
+        const item = tooltipItems[0];
+        let label = item.chart.data.labels[item.dataIndex];
+        if (Array.isArray(label)) {
+          return label.join(' ');
+        }
+        return label;
+    };
+    
+    const commonChartOptions = {
+        maintainAspectRatio: false,
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        family: "'Inter', sans-serif",
+                        size: 14,
+                    }
+                }
+            },
+            tooltip: {
+                enabled: true,
+                mode: 'index',
+                intersect: false,
+                titleFont: { family: "'Inter', sans-serif", size: 16, weight: 'bold' },
+                bodyFont: { family: "'Inter', sans-serif", size: 14 },
+                callbacks: {
+                   title: tooltipTitleCallback
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    font: { family: "'Inter', sans-serif", size: 12 },
+                    color: palette.darkGray,
+                },
+                grid: { display: false }
+            },
+            y: {
+                ticks: {
+                    font: { family: "'Inter', sans-serif", size: 12 },
+                    color: palette.darkGray,
+                },
+                grid: { color: palette.lightGray, borderDash: [2, 4] }
+            }
+        }
+    };
+
+    const winRateCtx = document.getElementById('winRateChart');
+    if(winRateCtx) {
+        new Chart(winRateCtx, {
+            type: 'bar',
+            data: {
+                labels: playerData.map(p => wrapLabel(p.name)),
+                datasets: [{
+                    label: 'Win Rate (%)',
+                    data: playerData.map(p => p.winRate),
+                    backgroundColor: [palette.blue, palette.purple, palette.yellow, palette.pink, palette.orange, palette.green],
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                ...commonChartOptions,
+                indexAxis: 'x',
+                 scales: {
+                    ...commonChartOptions.scales,
+                    y: { ...commonChartOptions.scales.y, beginAtZero: true, max: 100 }
+                }
+            }
+        });
+    }
+
+    const topPlayerCtx = document.getElementById('topPlayerChart');
+    if(topPlayerCtx) {
+        const topPlayer = playerData[0];
+        new Chart(topPlayerCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Wins', 'Losses'],
+                datasets: [{
+                    data: [topPlayer.wins, topPlayer.losses],
+                    backgroundColor: [palette.green, palette.lightGray],
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 4,
+                    hoverOffset: 4,
+                }]
+            },
+            options: {
+                maintainAspectRatio: true,
+                responsive: true,
+                cutout: '80%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+    }
+
+    const scatterCtx = document.getElementById('scatterPlot');
+    if(scatterCtx) {
+        new Chart(scatterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: playerData.map((p, i) => ({
+                    label: p.name,
+                    data: [{ x: p.pointsScored, y: p.pointsAgainst }],
+                    backgroundColor: [palette.blue, palette.purple, palette.yellow, palette.pink, palette.orange, palette.green][i],
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 2,
+                    pointRadius: 10,
+                    pointHoverRadius: 15,
+                }))
+            },
+            options: {
+                ...commonChartOptions,
+                 plugins: {
+                     ...commonChartOptions.plugins,
+                    tooltip: {
+                         ...commonChartOptions.plugins.tooltip,
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.x !== null) {
+                                    label += `(${context.parsed.x} Scored, ${context.parsed.y} Against)`;
+                                }
+                                return label;
+                            }
+                         }
+                    }
+                 },
+                scales: {
+                     x: {
+                        ...commonChartOptions.scales.x,
+                        title: { display: true, text: 'Points Scored (Offense)', font: { weight: 'bold', size: 14 } }
+                    },
+                     y: {
+                        ...commonChartOptions.scales.y,
+                        title: { display: true, text: 'Points Against (Defense)', font: { weight: 'bold', size: 14 } }
+                    }
+                }
+            }
+        });
+    }
+
+    const stackedBarCtx = document.getElementById('stackedBarChart');
+    const sortedByName = [...playerData].sort((a,b) => a.name.localeCompare(b.name));
+    if(stackedBarCtx) {
+        new Chart(stackedBarCtx, {
+            type: 'bar',
+            data: {
+                labels: sortedByName.map(p => wrapLabel(p.name)),
+                datasets: [
+                    {
+                        label: 'Wins',
+                        data: sortedByName.map(p => p.wins),
+                        backgroundColor: palette.blue,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Losses',
+                        data: sortedByName.map(p => p.losses),
+                        backgroundColor: palette.pink,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                ...commonChartOptions,
+                indexAxis: 'y',
+                scales: {
+                    x: { stacked: true, ...commonChartOptions.scales.x },
+                    y: { stacked: true, ...commonChartOptions.scales.y }
+                }
+            }
+        });
+    }
+
+    const pointDiffList = document.getElementById('pointDiffList');
+    if (pointDiffList) {
+        const sortedByDiff = [...playerData].sort((a, b) => b.pointDifferential - a.pointDifferential);
+        const maxDiff = Math.max(...sortedByDiff.map(p => Math.abs(p.pointDifferential)));
+
+        sortedByDiff.forEach(player => {
+            const item = document.createElement('div');
+            item.className = 'w-full';
+            
+            const percentage = (player.pointDifferential / maxDiff) * 50;
+            const barWidth = Math.abs(percentage);
+            const barMargin = percentage >= 0 ? 'margin-left: 50%;' : `margin-left: ${50 - barWidth}%;`;
+            const barColor = player.pointDifferential >= 0 ? 'bg-green-500' : 'bg-red-500';
+
+            item.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-semibold text-gray-700">${player.name}</span>
+                    <span class="font-bold ${player.pointDifferential >= 0 ? 'text-green-600' : 'text-red-600'}">${player.pointDifferential > 0 ? '+' : ''}${player.pointDifferential}</span>
+                </div>
+                <div class="h-2.5 w-full bg-gray-200 rounded-full flex items-center">
+                    <div style="width: ${barWidth}%; ${barMargin}" class="h-full rounded-full ${barColor}"></div>
+                </div>
+            `;
+            pointDiffList.appendChild(item);
+        });
+    }
+});
+</script>
+</body>
 </html>
