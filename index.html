@@ -57,6 +57,12 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #64748b;
         }
+        .form-guide-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
 
     </style>
 </head>
@@ -119,16 +125,16 @@
                     <h3 class="text-xl font-bold text-white mb-4">League Leaderboard</h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full" id="leagueLeaderboardTable">
-                            <thead>
+                             <thead>
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gamesPlayed">Played <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="avgScore">Avg Score <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="elo">ELO <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Form</th>
                                 </tr>
                             </thead>
                             <tbody id="leagueLeaderboardBody" class="divide-y divide-slate-800">
@@ -169,28 +175,12 @@
                         <div id="mostImprovedPlayerContainer" class="flex flex-col items-center"></div>
                     </div>
                 </div>
-                
-                <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
-                    <h3 class="text-xl font-bold text-white mb-6">Performance Charts</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Win/Loss Record</h4>
-                            <div class="h-64"><canvas id="winLossChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Games Played</h4>
-                            <div class="h-64"><canvas id="gamesPlayedChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Point Differential</h4>
-                            <div class="h-64"><canvas id="pointDifferentialChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Average Score</h4>
-                            <div class="h-64"><canvas id="averageScoreChart"></canvas></div>
-                        </div>
-                    </div>
+                 <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <h3 class="text-xl font-bold text-white mb-4">Player Spotlight</h3>
+                     <select id="spotlightPlayerSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full mb-4"></select>
+                     <div class="h-64"><canvas id="playerSpotlightChart"></canvas></div>
                 </div>
+                
             </div>
         </div>
     </div>
@@ -246,12 +236,15 @@
 
         // Use a simple, top-level key for Realtime Database.
         const databasePath = `artifacts/${sanitizedAppId}/public/data/tennisRounds`;
+        const eloPath = `artifacts/${sanitizedAppId}/public/data/eloRatings`;
 
         let db, auth, userId;
         let chartInstances = {};
         let allRoundsData = [];
-        let leagueSortState = { column: 'wins', direction: 'desc' };
+        let leagueSortState = { column: 'elo', direction: 'desc' };
         let roundSortStates = {};
+        let playerEloRatings = {};
+        let playerPerformanceHistory = {};
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -320,6 +313,62 @@
             modal.querySelector('div').classList.add('scale-95');
             modal.classList.add('hidden');
         };
+        
+        // ELO Calculation
+        const K_FACTOR = 32;
+        const calculateEloChange = (eloA, eloB, scoreA, scoreB) => {
+            const expectedA = 1 / (1 + 10 ** ((eloB - eloA) / 400));
+            
+            let actualA;
+            if (scoreA > scoreB) { actualA = 1; }
+            else if (scoreB > scoreA) { actualA = 0; }
+            else { actualA = 0.5; }
+
+            const newEloA = eloA + K_FACTOR * (actualA - expectedA);
+            const newEloB = eloB + K_FACTOR * ((1-actualA) - (1-expectedA));
+
+            return { newEloA, newEloB };
+        };
+        
+        const recalculateAndSaveAllElos = async () => {
+            const snapshot = await get(ref(db, databasePath));
+            const roundsData = snapshot.val() || {};
+            const roundsArray = Object.keys(roundsData).map(key => ({ id: key, ...roundsData[key] }));
+
+            if (!roundsArray || roundsArray.length === 0) return;
+
+            const allPlayers = new Set();
+            roundsArray.forEach(round => {
+                (round.matches || []).forEach(match => {
+                    if (match.playerA) allPlayers.add(match.playerA);
+                    if (match.playerB) allPlayers.add(match.playerB);
+                });
+            });
+
+            const recalculatedElos = {};
+            allPlayers.forEach(player => {
+                recalculatedElos[player] = 1500;
+            });
+
+            const sortedRounds = [...roundsArray].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+
+            sortedRounds.forEach(round => {
+                (round.matches || []).forEach(match => {
+                    if ((match.scoreA > 0 || match.scoreB > 0) && match.playerA && match.playerB) {
+                        const currentEloA = recalculatedElos[match.playerA];
+                        const currentEloB = recalculatedElos[match.playerB];
+
+                        const { newEloA, newEloB } = calculateEloChange(currentEloA, currentEloB, match.scoreA, match.scoreB);
+
+                        recalculatedElos[match.playerA] = newEloA;
+                        recalculatedElos[match.playerB] = newEloB;
+                    }
+                });
+            });
+            
+            await set(ref(db, eloPath), recalculatedElos);
+        };
+
 
         // Function to generate and save matches based on player count
         const generateAndSaveMatches = async () => {
@@ -343,18 +392,27 @@
                     console.error("Firebase database (db) is not initialized.");
                     return;
                 }
+                 // Initialize ELO for new players
+                const eloSnapshot = await get(ref(db, eloPath));
+                const currentElos = eloSnapshot.val() || {};
+                let updatedElos = {...currentElos};
+                players.forEach(p => {
+                    if (!updatedElos[p]) updatedElos[p] = 1500;
+                });
+                await set(ref(db, eloPath), updatedElos);
 
                 let newMatches = [];
-                if (players.length % 2 !== 0) {
-                    players.push("Bye");
+                let schedulePlayers = [...players];
+                if (schedulePlayers.length % 2 !== 0) {
+                    schedulePlayers.push("Bye");
                 }
 
-                const numPlayers = players.length;
+                const numPlayers = schedulePlayers.length;
                 const rounds = numPlayers - 1;
                 const half = numPlayers / 2;
                 
-                let fixedPlayer = players[0];
-                let rotatingPlayers = players.slice(1);
+                let fixedPlayer = schedulePlayers[0];
+                let rotatingPlayers = schedulePlayers.slice(1);
 
                 for (let round = 0; round < rounds; round++) {
                     let playerA = fixedPlayer;
@@ -396,9 +454,16 @@
         const saveMatchData = async (roundId, matchIndex, field, value) => {
             if (!db) return;
             const valueToSave = (field === 'scoreA' || field === 'scoreB') ? (parseInt(value, 10) || 0) : value;
+            
             try {
-                const fieldRef = ref(db, `${databasePath}/${roundId}/matches/${matchIndex}/${field}`);
-                await set(fieldRef, valueToSave);
+                // Update the specific field in Firebase
+                await set(ref(db, `${databasePath}/${roundId}/matches/${matchIndex}/${field}`), valueToSave);
+                
+                // If a score was changed, the entire league's ELO needs to be recalculated from scratch
+                if (field === 'scoreA' || field === 'scoreB') {
+                    await recalculateAndSaveAllElos();
+                }
+
             } catch (e) {
                 console.error("Error updating match data:", e);
                 showMessage("Error saving match update.", "error");
@@ -534,6 +599,29 @@
                 e.target.innerText = oldName;
             }
         };
+        
+        const createOrUpdateChart = (chartId, type, labels, datasets, options = {}) => {
+            if (chartInstances[chartId]) {
+                chartInstances[chartId].destroy();
+            }
+            const ctx = document.getElementById(chartId)?.getContext('2d');
+            if (!ctx) return;
+            
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } },
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'} },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'}, beginAtZero: false }
+                }
+            };
+            
+            chartInstances[chartId] = new Chart(ctx, { type, data: { labels, datasets }, options: {...defaultOptions, ...options} });
+        };
+
 
         const initializeFirebase = () => {
             const app = initializeApp(firebaseConfig);
@@ -554,30 +642,35 @@
                     document.getElementById('cancelMatchesBtn')?.addEventListener('click', hidePlayerNamesModal);
                     
                     onValue(ref(db, databasePath), (snapshot) => {
-                        const rounds = snapshot.val() || {};
-                        allRoundsData = Object.keys(rounds).map(key => ({ id: key, name: key, ...rounds[key] }));
-                        const createRoundContainer = document.getElementById('createRoundContainer');
-                        const addNewRoundContainer = document.getElementById('addNewRoundContainer');
-        
-                        if (allRoundsData.length > 0) {
-                            createRoundContainer.style.display = 'none';
-                            addNewRoundContainer.style.display = 'block';
-                            populateTabs(allRoundsData);
-                            // Find the currently active tab to preserve it, otherwise default to the first.
-                            let activeTab = document.querySelector('.tab-button.active');
-                            if (!activeTab || !document.getElementById(activeTab.id)) {
-                                const firstTabId = `tab-${allRoundsData.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                                showTab(firstTabId);
+                         const rounds = snapshot.val() || {};
+                         allRoundsData = Object.keys(rounds).map(key => ({ id: key, name: key, ...rounds[key] }));
+
+                         onValue(ref(db, eloPath), (eloSnapshot) => {
+                            playerEloRatings = eloSnapshot.val() || {};
+
+                            const createRoundContainer = document.getElementById('createRoundContainer');
+                            const addNewRoundContainer = document.getElementById('addNewRoundContainer');
+            
+                            if (allRoundsData.length > 0) {
+                                createRoundContainer.style.display = 'none';
+                                addNewRoundContainer.style.display = 'block';
+                                populateTabs(allRoundsData);
+                                // Find the currently active tab to preserve it, otherwise default to the first.
+                                let activeTab = document.querySelector('.tab-button.active');
+                                if (!activeTab || !document.getElementById(activeTab.id)) {
+                                    const firstTabId = `tab-${allRoundsData.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                                    showTab(firstTabId);
+                                }
+                                updateLeagueStats(allRoundsData);
+                            } else {
+                                createRoundContainer.style.display = 'block';
+                                addNewRoundContainer.style.display = 'none';
+                                document.getElementById('tabList').innerHTML = '';
+                                document.getElementById('tabPanelsContainer').innerHTML = '';
+                                updateLeagueStats([]);
                             }
-                            updateLeagueStats(allRoundsData);
-                        } else {
-                            createRoundContainer.style.display = 'block';
-                            addNewRoundContainer.style.display = 'none';
-                            document.getElementById('tabList').innerHTML = '';
-                            document.getElementById('tabPanelsContainer').innerHTML = '';
-                            updateLeagueStats([]);
-                        }
-                        hideLoadingSpinner();
+                            hideLoadingSpinner();
+                        });
                     }, (error) => {
                         console.error("Error fetching rounds:", error);
                         hideLoadingSpinner();
@@ -632,7 +725,8 @@
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
                         name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
-                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0
+                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0,
+                        elo: playerEloRatings[playerName] || 1500
                     };
                 }
                 return playerStats[playerName];
@@ -672,7 +766,7 @@
             }
 
             let sortedPlayers = Object.values(playerStats);
-            const { column, direction } = roundSortStates[round.id] || { column: 'wins', direction: 'desc' };
+            const { column, direction } = roundSortStates[round.id] || { column: 'elo', direction: 'desc' };
             
             sortedPlayers.sort((a, b) => {
                  const aVal = (column === 'name') ? a[column] : parseFloat(a[column] || 0);
@@ -691,12 +785,13 @@
             leaderboardBody.innerHTML = '';
             
             if (sortedPlayers.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No match data for this round.</td></tr>`;
+                leaderboardBody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No match data for this round.</td></tr>`;
             } else {
                 sortedPlayers.forEach((stats, index) => {
                     const row = `
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${stats.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-bold">${Math.round(stats.elo)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
@@ -779,6 +874,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
+                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="elo">ELO <span class="sort-icon">▲</span></th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gamesPlayed">Played <span class="sort-icon">▲</span></th>
@@ -835,13 +931,14 @@
         const updateLeagueStats = (rounds) => {
             const playerStats = {};
             let allMatches = [];
+            playerPerformanceHistory = {};
 
             const getStatEntry = (playerName) => {
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
                         name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
                         totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0,
-                        matchHistory: []
+                        matchHistory: [], elo: playerEloRatings[playerName] || 1500
                     };
                 }
                 return playerStats[playerName];
@@ -853,9 +950,12 @@
                 (round.matches || []).forEach(match => {
                     if(!match.playerA || !match.playerB) return;
                     
-                    allMatches.push(match);
+                    allMatches.push({...match, round: round.id});
                     const statsA = getStatEntry(match.playerA);
                     const statsB = getStatEntry(match.playerB);
+
+                     if (!playerPerformanceHistory[match.playerA]) playerPerformanceHistory[match.playerA] = [];
+                     if (!playerPerformanceHistory[match.playerB]) playerPerformanceHistory[match.playerB] = [];
 
                     if (match.scoreA > 0 || match.scoreB > 0) {
                         statsA.gamesPlayed++;
@@ -878,6 +978,24 @@
                             statsB.matchHistory.push('W');
                             statsA.matchHistory.push('L');
                         }
+                    }
+                });
+                 // After processing a round, store snapshot of stats
+                Object.keys(playerStats).forEach(playerName => {
+                    const playerRoundStats = getPlayerStatsForRound(round, playerName);
+                    if (playerRoundStats.gamesPlayed > 0) {
+                        const existingHistoryIndex = playerPerformanceHistory[playerName].findIndex(h => h.round === round.id);
+                        if (existingHistoryIndex > -1) {
+                            playerPerformanceHistory[playerName][existingHistoryIndex].pointDifferential = playerStats[playerName].pointDifferential;
+                        } else {
+                            playerPerformanceHistory[playerName].push({
+                                round: round.id,
+                                elo: playerEloRatings[playerName] || 1500,
+                                pointDifferential: playerStats[playerName].pointDifferential
+                            });
+                        }
+                        // Sort history by round
+                        playerPerformanceHistory[playerName].sort((a,b) => a.round.localeCompare(b.round, undefined, {numeric: true}));
                     }
                 });
             });
@@ -914,10 +1032,8 @@
                 let bVal = b[column];
 
                 if (column === 'name') {
-                   // string comparison
                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
                 } else {
-                   // numeric comparison
                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
                 }
             });
@@ -944,15 +1060,18 @@
                 leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No player data available.</td></tr>`;
             } else {
                 sortedPlayers.forEach((stats, index) => {
+                    const formHtml = stats.matchHistory.slice(-5).map(r => `<span class="form-guide-dot ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}"></span>`).join('');
+                    const isHotStreak = stats.matchHistory.slice(-3).join('') === 'WWW';
+
                     const row = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${stats.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore.toFixed(1)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-white font-semibold flex items-center">${stats.name} ${isHotStreak ? '<span>🔥</span>' : ''}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-sky-400 font-bold">${Math.round(stats.elo)}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm"><div class="flex gap-1">${formHtml}</div></td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
                 });
@@ -1012,12 +1131,14 @@
                  renderStatCard('mostImprovedPlayerContainer');
             }
 
-
-            // --- Render Charts & Rivalry ---
+            // --- Render Rivalry & Spotlight---
             const allPlayerNames = Object.keys(playerStats);
             updateRivalryDropdowns(allPlayerNames);
             updateRivalryStats(allMatches);
+            updateSpotlightDropdown(allPlayerNames);
+            updateSpotlightChart(playerPerformanceHistory);
 
+            // --- Render Performance Charts ---
             const chartLabels = sortedPlayers.map(p => p.name);
             const chartData = {
                 wins: sortedPlayers.map(p => p.wins),
@@ -1029,32 +1150,10 @@
 
             const chartColors = ['#2563EB', '#16A34A', '#F59E0B', '#DC2626', '#9333EA', '#DB2777', '#4F46E5', '#D946EF'];
 
-            const createOrUpdateChart = (chartId, type, labels, datasets, options = {}) => {
-                if (chartInstances[chartId]) {
-                    chartInstances[chartId].destroy();
-                }
-                const ctx = document.getElementById(chartId)?.getContext('2d');
-                if (!ctx) return;
-                
-                const defaultOptions = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8' } },
-                    },
-                    scales: {
-                       x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'} },
-                       y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'}, beginAtZero: true }
-                    }
-                };
-                
-                chartInstances[chartId] = new Chart(ctx, { type, data: { labels, datasets }, options: {...defaultOptions, ...options} });
-            };
-
             createOrUpdateChart('winLossChart', 'bar', chartLabels, [
                 { label: 'Wins', data: chartData.wins, backgroundColor: '#22c55e' },
                 { label: 'Losses', data: chartData.losses, backgroundColor: '#ef4444' }
-            ], { scales: { x: { stacked: true }, y: { stacked: true } } });
+            ], { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } });
 
             createOrUpdateChart('gamesPlayedChart', 'doughnut', chartLabels, [{
                 label: 'Games Played',
@@ -1076,7 +1175,7 @@
                 borderColor: '#a855f7',
                 tension: 0.3,
                 fill: true,
-            }]);
+            }], { scales: { y: { beginAtZero: true } } });
         };
         
         function getPlayerStatsForRound(round, playerName) {
@@ -1127,22 +1226,71 @@
                 return;
             }
 
-            let p1Wins = 0, p2Wins = 0, totalGames = 0;
+            let p1Wins = 0, p2Wins = 0, totalGames = 0, p1Points = 0, p2Points = 0, p1Streak = 0, p2Streak = 0, maxP1Streak = 0, maxP2Streak = 0;
             allMatches.forEach(match => {
                 if ((match.playerA === p1 && match.playerB === p2) || (match.playerA === p2 && match.playerB === p1)) {
                     totalGames++;
-                    if (match.playerA === p1 && match.scoreA > match.scoreB) p1Wins++;
-                    else if(match.playerB === p1 && match.scoreB > match.scoreA) p1Wins++;
-                    else if (match.scoreA !== match.scoreB) p2Wins++;
+                     if (match.playerA === p1) { p1Points += match.scoreA; p2Points += match.scoreB; }
+                     else { p1Points += match.scoreB; p2Points += match.scoreA; }
+
+                    if ((match.playerA === p1 && match.scoreA > match.scoreB) || (match.playerB === p1 && match.scoreB > match.scoreA)) {
+                        p1Wins++; p1Streak++; p2Streak = 0;
+                    } else if (match.scoreA !== match.scoreB) {
+                        p2Wins++; p2Streak++; p1Streak = 0;
+                    }
+                    maxP1Streak = Math.max(maxP1Streak, p1Streak);
+                    maxP2Streak = Math.max(maxP2Streak, p2Streak);
                 }
             });
+            const avgP1Score = totalGames > 0 ? (p1Points / totalGames).toFixed(1) : 0;
+            const avgP2Score = totalGames > 0 ? (p2Points / totalGames).toFixed(1) : 0;
             
             container.innerHTML = `
-                <div class="text-center">
-                    <p class="text-4xl font-extrabold text-white">${p1Wins} - ${p2Wins}</p>
-                    <p class="text-sm text-slate-400 mt-1">in ${totalGames} games</p>
+                <div class="grid grid-cols-3 divide-x divide-slate-700 text-center">
+                    <div>
+                        <p class="text-2xl font-bold">${p1Wins} - ${p2Wins}</p>
+                        <p class="text-xs text-slate-400">Record</p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold">${avgP1Score} - ${avgP2Score}</p>
+                        <p class="text-xs text-slate-400">Avg Score</p>
+                    </div>
+                     <div>
+                        <p class="text-2xl font-bold">${maxP1Streak > maxP2Streak ? p1 : p2} (${Math.max(maxP1Streak, maxP2Streak)})</p>
+                        <p class="text-xs text-slate-400">Longest Streak</p>
+                    </div>
                 </div>
             `;
+        }
+        function updateSpotlightDropdown(playerNames) {
+            const select = document.getElementById('spotlightPlayerSelect');
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Select a Player</option>';
+            playerNames.forEach(name => {
+                select.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+            select.value = currentValue;
+        }
+
+        function updateSpotlightChart(history) {
+            const player = document.getElementById('spotlightPlayerSelect').value;
+            if (!player || !history[player]) {
+                if (chartInstances.playerSpotlightChart) chartInstances.playerSpotlightChart.destroy();
+                return;
+            }
+            
+            const playerData = history[player];
+            const labels = playerData.map(d => d.round);
+            const eloData = playerData.map(d => Math.round(d.elo));
+
+            createOrUpdateChart('playerSpotlightChart', 'line', labels, [{
+                label: 'ELO Rating',
+                data: eloData,
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                fill: true,
+                tension: 0.3
+            }]);
         }
 
 
@@ -1159,7 +1307,7 @@
                     const isRound = !!round;
                     const stateKey = isRound ? round.id : 'league';
                     
-                    const currentState = isRound ? (stateObject[stateKey] || { column: 'wins', direction: 'desc' }) : leagueSortState;
+                    const currentState = isRound ? (stateObject[stateKey] || { column: 'elo', direction: 'desc' }) : leagueSortState;
                     
                     let direction = 'desc';
                     if (currentState.column === column && currentState.direction === 'desc') {
@@ -1190,6 +1338,7 @@
             setupSorting('leagueLeaderboardTable', leagueSortState, updateLeagueStats);
             document.getElementById('player1Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
             document.getElementById('player2Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
+             document.getElementById('spotlightPlayerSelect').addEventListener('change', () => updateSpotlightChart(playerPerformanceHistory));
         });
     </script>
 </body>
