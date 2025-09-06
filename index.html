@@ -641,23 +641,26 @@
                     const statsA = getStatEntry(match.playerA);
                     const statsB = getStatEntry(match.playerB);
 
-                    statsA.gamesPlayed++;
-                    statsB.gamesPlayed++;
-                    statsA.totalPoints += match.scoreA;
-                    statsB.totalPoints += match.scoreB;
-                    statsA.pointDifferential += match.scoreA - match.scoreB;
-                    statsB.pointDifferential += match.scoreB - match.scoreA;
-                    
-                    if (match.scoreA > match.scoreB) {
-                        statsA.wins++;
-                        statsB.losses++;
-                        statsA.matchHistory.push('W');
-                        statsB.matchHistory.push('L');
-                    } else if (match.scoreB > match.scoreA) {
-                        statsB.wins++;
-                        statsA.losses++;
-                        statsB.matchHistory.push('W');
-                        statsA.matchHistory.push('L');
+                    // Only update stats if a score has been entered for the match
+                    if (match.scoreA > 0 || match.scoreB > 0) {
+                        statsA.gamesPlayed++;
+                        statsB.gamesPlayed++;
+                        statsA.totalPoints += match.scoreA;
+                        statsB.totalPoints += match.scoreB;
+                        statsA.pointDifferential += match.scoreA - match.scoreB;
+                        statsB.pointDifferential += match.scoreB - match.scoreA;
+                        
+                        if (match.scoreA > match.scoreB) {
+                            statsA.wins++;
+                            statsB.losses++;
+                            statsA.matchHistory.push('W');
+                            statsB.matchHistory.push('L');
+                        } else if (match.scoreB > match.scoreA) {
+                            statsB.wins++;
+                            statsA.losses++;
+                            statsB.matchHistory.push('W');
+                            statsA.matchHistory.push('L');
+                        }
                     }
                 });
             });
@@ -793,4 +796,5 @@
     </script>
 </body>
 </html>
+
 
