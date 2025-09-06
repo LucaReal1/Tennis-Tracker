@@ -169,9 +169,11 @@
                     populateLeaderboard(data);
                     renderCharts(data);
                 }
-                hideLoadingSpinner(); // Hide spinner when match data is loaded
+                // Moved hideLoadingSpinner here to ensure it is always called
+                hideLoadingSpinner();
             }, (error) => {
                 console.error("Error fetching match data:", error);
+                // Also hide spinner on error
                 hideLoadingSpinner();
             });
         };
