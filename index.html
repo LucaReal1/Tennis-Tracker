@@ -15,12 +15,18 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
-        // Use the firebase config provided by the Canvas environment
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // Your Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyDwEb6uimdpzWYGKD66WiQpt-FDT7nwHts",
+          authDomain: "tennis-tracker-7eff9.firebaseapp.com",
+          projectId: "tennis-tracker-7eff9",
+          storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
+          messagingSenderId: "677749560869",
+          appId: "1:677749560869:web:c39cea9900805fd97851cc"
+        };
         
-        // Sanitize the appId to ensure it does not contain characters forbidden by Firebase Realtime Database
+        // Use a static appId and remove Canvas-specific variables
+        const appId = firebaseConfig.projectId;
         const sanitizedAppId = appId.replace(/[.#$\[\]]/g, '_');
 
         // Use a simple, top-level key for Realtime Database.
@@ -153,14 +159,12 @@
                 } else {
                     // Sign in anonymously if no user is found.
                     try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
+                        // The 'auth/configuration-not-found' error often means anonymous sign-in is not enabled
+                        // in your Firebase console. Go to Authentication -> Sign-in method to enable it.
                         console.error("Firebase Auth error:", error);
-                        document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}`;
+                        document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}. Please enable Anonymous sign-in in your Firebase Console.`;
                         hideLoadingSpinner();
                     }
                 }
@@ -318,7 +322,7 @@
                 if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
 
                 if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
-                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
+                else if (scoreB > scoreA) { players[playerB].wins++; players[A].losses++; }
 
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
