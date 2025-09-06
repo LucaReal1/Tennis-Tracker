@@ -19,6 +19,15 @@
             height: 400px;
             max-height: 50vh;
         }
+        [role="tab"] {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        [role="tab"][aria-selected="true"] {
+            border-bottom: 3px solid;
+            border-color: #3b82f6; /* blue-500 */
+            color: #1f2937; /* gray-800 */
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -29,316 +38,406 @@
             <p class="text-lg text-gray-600 mt-2">The Official Leaderboard & Performance Analytics</p>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Data Table Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">Edit Match Data Below</h2>
+            <p class="text-gray-600 mb-6">Click on a tab to select a round. Change the values in the table, then the leaderboard and charts below will update automatically!</p>
 
-            <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
-                <h2 class="text-2xl font-bold mb-4 text-gray-700">Current Standings</h2>
-                <p class="text-gray-600 mb-6">Who's dominating the court? The win rate chart shows the current rankings based on overall performance. The higher the bar, the more formidable the player.</p>
-                <div class="chart-container mx-auto max-w-5xl">
-                    <canvas id="winRateChart"></canvas>
-                </div>
+            <!-- Tab Buttons -->
+            <div role="tablist" class="flex flex-col sm:flex-row gap-2 border-b-2 border-gray-200 mb-6">
+                <button role="tab" id="tab-round1" aria-selected="true" aria-controls="panel-round1" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 1</button>
+                <button role="tab" id="tab-round2" aria-selected="false" aria-controls="panel-round2" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 2</button>
+                <button role="tab" id="tab-round3" aria-selected="false" aria-controls="panel-round3" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 3</button>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 flex flex-col items-center justify-center text-center">
-                 <h2 class="text-2xl font-bold mb-4 text-gray-700">King of the Court</h2>
-                 <p class="text-gray-600 mb-6">All hail the current leader! With an impressive performance, Luca R is the player to beat.</p>
-                <div class="chart-container w-full max-w-xs h-auto relative">
-                    <canvas id="topPlayerChart"></canvas>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span class="text-5xl font-black text-green-500">80%</span>
-                        <span class="text-sm font-semibold text-gray-600">Win Rate</span>
-                    </div>
-                </div>
+            <!-- Tab Panels (Tables) -->
+            <div id="panel-round1" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200">
+                <table id="matchDataTable-round1" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-xl p-6 md:p-8">
-                <h2 class="text-2xl font-bold mb-4 text-gray-700">Player Playstyles</h2>
-                <p class="text-gray-600 mb-6">This chart maps out offensive power (Points Scored) versus defensive resilience (Points Against). Players in the top-left are high-scoring attackers who may concede points, while those in the bottom-right are defensive walls.</p>
-                <div class="chart-container mx-auto max-w-3xl">
-                    <canvas id="scatterPlot"></canvas>
-                </div>
+            <div id="panel-round2" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200 hidden">
+                <table id="matchDataTable-round2" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
-                 <h2 class="text-2xl font-bold mb-4 text-gray-700">Match Performance Breakdown</h2>
-                 <p class="text-gray-600 mb-6">Every match tells a story. This stacked bar chart visualizes the total matches played by each person, clearly breaking down their wins and losses. It's a true measure of experience and success on the court.</p>
-                 <div class="chart-container mx-auto max-w-5xl">
-                    <canvas id="stackedBarChart"></canvas>
-                </div>
+            <div id="panel-round3" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200 hidden">
+                <table id="matchDataTable-round3" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
+                        </tr>
+                        <tr>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            
-             <div class="lg:col-span-3 bg-white rounded-2xl shadow-xl p-6 md:p-8">
-                <h2 class="text-2xl font-bold mb-4 text-gray-700">Point Differential Leaders</h2>
-                <p class="text-gray-600 mb-6">It's not just about winning, but by how much. The point differential shows who truly dominates their matches. A higher positive number indicates more decisive victories.</p>
-                <div class="w-full space-y-4">
-                    <div id="pointDiffList"></div>
-                </div>
-            </div>
+        </div>
 
-        </main>
+        <!-- Leaderboard Table -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-700">Official Leaderboard</h2>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table id="leaderboardTable" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Games Played</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point Differential</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Leaderboard data will be populated here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Win/Loss Ratio</h2>
+                <div class="chart-container">
+                    <canvas id="winLossChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Games Played</h2>
+                <div class="chart-container">
+                    <canvas id="gamesPlayedChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <h2 class="text-xl font-bold text-center mb-4 text-gray-700">Point Differential</h2>
+                <div class="chart-container">
+                    <canvas id="pointDifferentialChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        let winLossChart, gamesPlayedChart, pointDifferentialChart;
 
-    const palette = {
-        orange: '#FF5733',
-        green: '#33FF57',
-        blue: '#3357FF',
-        pink: '#FF33A1',
-        yellow: '#F1C40F',
-        purple: '#9B59B6',
-        lightGray: '#e5e7eb',
-        darkGray: '#4b5563',
-    };
-
-    const playerData = [
-        { name: 'Luca R', wins: 10000, losses: 2, pointsScored: 120, pointsAgainst: 85 },
-        { name: 'Marcello', wins: 7, losses: 3, pointsScored: 115, pointsAgainst: 90 },
-        { name: 'Giacomo', wins: 6, losses: 4, pointsScored: 100, pointsAgainst: 105 },
-        { name: 'Fabrizio', wins: 4, losses: 6, pointsScored: 95, pointsAgainst: 110 },
-        { name: 'Marco', wins: 3, losses: 7, pointsScored: 90, pointsAgainst: 118 },
-        { name: 'Luca C', wins: 2, losses: 8, pointsScored: 80, pointsAgainst: 122 },
-    ];
-
-    playerData.forEach(p => {
-        p.matchesPlayed = p.wins + p.losses;
-        p.winRate = p.matchesPlayed > 0 ? (p.wins / p.matchesPlayed) * 100 : 0;
-        p.pointDifferential = p.pointsScored - p.pointsAgainst;
-    });
-
-    playerData.sort((a, b) => b.winRate - a.winRate);
-    
-    const wrapLabel = (label) => {
-        const maxLen = 16;
-        if (label.length <= maxLen) return label;
-        const words = label.split(' ');
-        const lines = [];
-        let currentLine = '';
-        for (const word of words) {
-            if ((currentLine + ' ' + word).trim().length > maxLen) {
-                lines.push(currentLine.trim());
-                currentLine = word;
-            } else {
-                currentLine = (currentLine + ' ' + word).trim();
-            }
-        }
-        if (currentLine) lines.push(currentLine);
-        return lines;
-    };
-    
-    const tooltipTitleCallback = (tooltipItems) => {
-        const item = tooltipItems[0];
-        let label = item.chart.data.labels[item.dataIndex];
-        if (Array.isArray(label)) {
-          return label.join(' ');
-        }
-        return label;
-    };
-    
-    const commonChartOptions = {
-        maintainAspectRatio: false,
-        responsive: true,
-        plugins: {
-            legend: {
-                labels: {
-                    font: {
-                        family: "'Inter', sans-serif",
-                        size: 14,
-                    }
-                }
-            },
-            tooltip: {
-                enabled: true,
-                mode: 'index',
-                intersect: false,
-                titleFont: { family: "'Inter', sans-serif", size: 16, weight: 'bold' },
-                bodyFont: { family: "'Inter', sans-serif", size: 14 },
-                callbacks: {
-                   title: tooltipTitleCallback
-                }
-            }
-        },
-        scales: {
-            x: {
-                ticks: {
-                    font: { family: "'Inter', sans-serif", size: 12 },
-                    color: palette.darkGray,
-                },
-                grid: { display: false }
-            },
-            y: {
-                ticks: {
-                    font: { family: "'Inter', sans-serif", size: 12 },
-                    color: palette.darkGray,
-                },
-                grid: { color: palette.lightGray, borderDash: [2, 4] }
-            }
-        }
-    };
-
-    const winRateCtx = document.getElementById('winRateChart');
-    if(winRateCtx) {
-        new Chart(winRateCtx, {
-            type: 'bar',
-            data: {
-                labels: playerData.map(p => wrapLabel(p.name)),
-                datasets: [{
-                    label: 'Win Rate (%)',
-                    data: playerData.map(p => p.winRate),
-                    backgroundColor: [palette.blue, palette.purple, palette.yellow, palette.pink, palette.orange, palette.green],
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                }]
-            },
-            options: {
-                ...commonChartOptions,
-                indexAxis: 'x',
-                 scales: {
-                    ...commonChartOptions.scales,
-                    y: { ...commonChartOptions.scales.y, beginAtZero: true, max: 100 }
-                }
-            }
-        });
-    }
-
-    const topPlayerCtx = document.getElementById('topPlayerChart');
-    if(topPlayerCtx) {
-        const topPlayer = playerData[0];
-        new Chart(topPlayerCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Wins', 'Losses'],
-                datasets: [{
-                    data: [topPlayer.wins, topPlayer.losses],
-                    backgroundColor: [palette.green, palette.lightGray],
-                    borderColor: 'rgba(255, 255, 255, 1)',
-                    borderWidth: 4,
-                    hoverOffset: 4,
-                }]
-            },
-            options: {
-                maintainAspectRatio: true,
-                responsive: true,
-                cutout: '80%',
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { enabled: false }
-                }
-            }
-        });
-    }
-
-    const scatterCtx = document.getElementById('scatterPlot');
-    if(scatterCtx) {
-        new Chart(scatterCtx, {
-            type: 'scatter',
-            data: {
-                datasets: playerData.map((p, i) => ({
-                    label: p.name,
-                    data: [{ x: p.pointsScored, y: p.pointsAgainst }],
-                    backgroundColor: [palette.blue, palette.purple, palette.yellow, palette.pink, palette.orange, palette.green][i],
-                    borderColor: 'rgba(255, 255, 255, 0.5)',
-                    borderWidth: 2,
-                    pointRadius: 10,
-                    pointHoverRadius: 15,
-                }))
-            },
-            options: {
-                ...commonChartOptions,
-                 plugins: {
-                     ...commonChartOptions.plugins,
-                    tooltip: {
-                         ...commonChartOptions.plugins.tooltip,
-                         callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.x !== null) {
-                                    label += `(${context.parsed.x} Scored, ${context.parsed.y} Against)`;
-                                }
-                                return label;
-                            }
-                         }
-                    }
-                 },
-                scales: {
-                     x: {
-                        ...commonChartOptions.scales.x,
-                        title: { display: true, text: 'Points Scored (Offense)', font: { weight: 'bold', size: 14 } }
-                    },
-                     y: {
-                        ...commonChartOptions.scales.y,
-                        title: { display: true, text: 'Points Against (Defense)', font: { weight: 'bold', size: 14 } }
-                    }
-                }
-            }
-        });
-    }
-
-    const stackedBarCtx = document.getElementById('stackedBarChart');
-    const sortedByName = [...playerData].sort((a,b) => a.name.localeCompare(b.name));
-    if(stackedBarCtx) {
-        new Chart(stackedBarCtx, {
-            type: 'bar',
-            data: {
-                labels: sortedByName.map(p => wrapLabel(p.name)),
-                datasets: [
-                    {
-                        label: 'Wins',
-                        data: sortedByName.map(p => p.wins),
-                        backgroundColor: palette.blue,
-                        borderRadius: 4,
-                    },
-                    {
-                        label: 'Losses',
-                        data: sortedByName.map(p => p.losses),
-                        backgroundColor: palette.pink,
-                        borderRadius: 4,
-                    }
-                ]
-            },
-            options: {
-                ...commonChartOptions,
-                indexAxis: 'y',
-                scales: {
-                    x: { stacked: true, ...commonChartOptions.scales.x },
-                    y: { stacked: true, ...commonChartOptions.scales.y }
-                }
-            }
-        });
-    }
-
-    const pointDiffList = document.getElementById('pointDiffList');
-    if (pointDiffList) {
-        const sortedByDiff = [...playerData].sort((a, b) => b.pointDifferential - a.pointDifferential);
-        const maxDiff = Math.max(...sortedByDiff.map(p => Math.abs(p.pointDifferential)));
-
-        sortedByDiff.forEach(player => {
-            const item = document.createElement('div');
-            item.className = 'w-full';
+        // Function to render all charts
+        const renderCharts = (data) => {
+            // Destroy existing chart instances to prevent conflicts
+            if (winLossChart) winLossChart.destroy();
+            if (gamesPlayedChart) gamesPlayedChart.destroy();
+            if (pointDifferentialChart) pointDifferentialChart.destroy();
             
-            const percentage = (player.pointDifferential / maxDiff) * 50;
-            const barWidth = Math.abs(percentage);
-            const barMargin = percentage >= 0 ? 'margin-left: 50%;' : `margin-left: ${50 - barWidth}%;`;
-            const barColor = player.pointDifferential >= 0 ? 'bg-green-500' : 'bg-red-500';
+            // Create new charts
+            createWinLossChart(data);
+            createGamesPlayedChart(data);
+            createPointDifferentialChart(data);
+        };
 
-            item.innerHTML = `
-                <div class="flex justify-between items-center mb-1">
-                    <span class="font-semibold text-gray-700">${player.name}</span>
-                    <span class="font-bold ${player.pointDifferential >= 0 ? 'text-green-600' : 'text-red-600'}">${player.pointDifferential > 0 ? '+' : ''}${player.pointDifferential}</span>
-                </div>
-                <div class="h-2.5 w-full bg-gray-200 rounded-full flex items-center">
-                    <div style="width: ${barWidth}%; ${barMargin}" class="h-full rounded-full ${barColor}"></div>
-                </div>
-            `;
-            pointDiffList.appendChild(item);
+        const updateInfographic = (tableId) => {
+            const table = document.getElementById(tableId);
+            const data = processMatchData(table);
+            populateLeaderboard(data);
+            renderCharts(data);
+        };
+
+        // Function to process match data from the table and compute player stats
+        const processMatchData = (table) => {
+            const rows = table.querySelectorAll('tbody tr');
+            const players = {};
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 4) {
+                    const playerA = cells[0].innerText.trim();
+                    const scoreA = parseInt(cells[1].innerText, 10);
+                    const scoreB = parseInt(cells[2].innerText, 10);
+                    const playerB = cells[3].innerText.trim();
+
+                    // Initialize players if they don't exist
+                    if (!players[playerA]) {
+                        players[playerA] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                    }
+                    if (!players[playerB]) {
+                        players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                    }
+
+                    // Update stats
+                    if (scoreA > scoreB) {
+                        players[playerA].wins++;
+                        players[playerB].losses++;
+                    } else if (scoreB > scoreA) {
+                        players[playerB].wins++;
+                        players[playerA].losses++;
+                    }
+
+                    players[playerA].pointsScored += scoreA;
+                    players[playerA].pointsAgainst += scoreB;
+                    players[playerB].pointsScored += scoreB;
+                    players[playerB].pointsAgainst += scoreA;
+                }
+            });
+
+            // Convert the players object into an array for sorting and processing
+            const playerData = Object.keys(players).map(name => {
+                const player = players[name];
+                const gamesPlayed = player.wins + player.losses;
+                const winPercentage = gamesPlayed > 0 ? (player.wins / gamesPlayed) * 100 : 0;
+                const pointDifferential = player.pointsScored - player.pointsAgainst;
+                return {
+                    name,
+                    wins: player.wins,
+                    losses: player.losses,
+                    gamesPlayed,
+                    winPercentage,
+                    pointDifferential
+                };
+            });
+
+            return playerData.sort((a, b) => {
+                if (a.wins !== b.wins) {
+                    return b.wins - a.wins;
+                }
+                return b.pointDifferential - a.pointDifferential;
+            });
+        };
+
+        const populateLeaderboard = (data) => {
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = ''; // Clear previous data
+            
+            data.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${player.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.wins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.losses}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.gamesPlayed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.winPercentage.toFixed(1)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.pointDifferential}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        };
+
+        const createWinLossChart = (data) => {
+            const ctx = document.getElementById('winLossChart').getContext('2d');
+            winLossChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [
+                        {
+                            label: 'Wins',
+                            data: data.map(p => p.wins),
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)', // Tailwind blue-500
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Losses',
+                            data: data.map(p => p.losses),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)', // Tailwind red-500
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Games' }
+                        }
+                    }
+                }
+            });
+        };
+
+        const createGamesPlayedChart = (data) => {
+            const ctx = document.getElementById('gamesPlayedChart').getContext('2d');
+            gamesPlayedChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [{
+                        data: data.map(p => p.gamesPlayed),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(99, 102, 241, 0.8)',
+                            'rgba(163, 230, 53, 0.8)'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false,
+                        }
+                    }
+                }
+            });
+        };
+
+        const createPointDifferentialChart = (data) => {
+            const ctx = document.getElementById('pointDifferentialChart').getContext('2d');
+            pointDifferentialChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [{
+                        label: 'Point Differential',
+                        data: data.map(p => p.pointDifferential),
+                        backgroundColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'), // Green for positive, red for negative
+                        borderColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Point Differential'
+                            }
+                        }
+                    }
+                }
+            });
+        };
+        
+        // Tab switching logic
+        const tabList = document.querySelector('[role="tablist"]');
+        const tabs = tabList.querySelectorAll('[role="tab"]');
+        
+        const showTab = (tabId) => {
+            const currentActiveTab = tabList.querySelector('[aria-selected="true"]');
+            const currentPanelId = currentActiveTab.getAttribute('aria-controls');
+            const currentPanel = document.getElementById(currentPanelId);
+
+            currentActiveTab.setAttribute('aria-selected', 'false');
+            currentPanel.classList.add('hidden');
+
+            const newActiveTab = document.getElementById(tabId);
+            const newPanelId = newActiveTab.getAttribute('aria-controls');
+            const newPanel = document.getElementById(newPanelId);
+
+            newActiveTab.setAttribute('aria-selected', 'true');
+            newPanel.classList.remove('hidden');
+
+            // Update infographic for the new tab's data
+            updateInfographic(newPanel.querySelector('table').id);
+        };
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                showTab(tab.id);
+            });
         });
-    }
-});
-</script>
+
+        // Initial render on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            // Get the ID of the initially selected tab's panel and update the infographic
+            const initialTab = document.querySelector('[role="tab"][aria-selected="true"]');
+            const initialPanelId = initialTab.getAttribute('aria-controls');
+            const initialPanel = document.getElementById(initialPanelId);
+            updateInfographic(initialPanel.querySelector('table').id);
+        });
+    </script>
 </body>
 </html>
