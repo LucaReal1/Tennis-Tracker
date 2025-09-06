@@ -13,7 +13,7 @@
         // Firebase and Firestore imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // Your web app's Firebase configuration
@@ -27,8 +27,8 @@
             measurementId: "G-VSBCC91SW8"
         };
         
-        // This is a placeholder. You'll need to set up Firestore Security Rules to allow access.
-        const appId = "default-app-id"; 
+        // Using a simpler, top-level collection for your own Firebase project.
+        const collectionPath = "tennisRounds";
 
         let db, auth, userId;
         let unsubscribeMatchData;
@@ -45,6 +45,30 @@
         const hideLoadingSpinner = () => {
             const spinner = document.getElementById('loadingIndicator');
             if (spinner) spinner.style.display = 'none';
+        };
+        
+        // Function to create an initial round
+        const createNewRound = async () => {
+            showLoadingSpinner();
+            const roundsCollectionRef = collection(db, collectionPath);
+            try {
+                const querySnapshot = await getDocs(roundsCollectionRef);
+                if (querySnapshot.empty) {
+                    const newRoundRef = doc(roundsCollectionRef, "Round 1");
+                    const initialMatches = [
+                        { playerA: 'Player 1', scoreA: 0, scoreB: 0, playerB: 'Player 2' },
+                        { playerA: 'Player 3', scoreA: 0, scoreB: 0, playerB: 'Player 4' }
+                    ];
+                    await setDoc(newRoundRef, { name: "Round 1", matches: initialMatches });
+                    console.log("Initial 'Round 1' created successfully!");
+                } else {
+                    console.log("A round already exists. No new round created.");
+                }
+            } catch (e) {
+                console.error("Error creating new round:", e);
+            } finally {
+                hideLoadingSpinner();
+            }
         };
 
         const initializeFirebase = async () => {
@@ -67,7 +91,7 @@
             }
 
             // Set up a listener for the rounds data from Firestore
-            const roundsCollectionRef = collection(db, `artifacts/${appId}/public/data/rounds`);
+            const roundsCollectionRef = collection(db, collectionPath);
             onSnapshot(roundsCollectionRef, (querySnapshot) => {
                 const rounds = [];
                 querySnapshot.forEach((doc) => {
@@ -154,7 +178,7 @@
                 unsubscribeMatchData();
             }
 
-            const roundDocRef = doc(db, `artifacts/${appId}/public/data/rounds/${roundId}`);
+            const roundDocRef = doc(db, collectionPath, roundId);
             unsubscribeMatchData = onSnapshot(roundDocRef, (docSnap) => {
                 if (docSnap.exists() && docSnap.data().matches) {
                     const matches = docSnap.data().matches;
@@ -203,7 +227,7 @@
             });
 
             try {
-                const roundDocRef = doc(db, `artifacts/${appId}/public/data/rounds/${roundId}`);
+                const roundDocRef = doc(db, collectionPath, roundId);
                 await setDoc(roundDocRef, { matches }, { merge: true });
                 console.log("Match data saved to Firestore!");
             } catch (e) {
@@ -233,7 +257,7 @@
                 if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
 
                 if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
-                else if (scoreB > scoreA) { players[B].wins++; players[A].losses++; }
+                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
 
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
@@ -375,6 +399,13 @@
             <div class="text-center py-4" id="loadingIndicator">
                 <div class="loading-spinner mx-auto"></div>
                 <p class="mt-2 text-gray-500">Loading data...</p>
+            </div>
+
+            <!-- New button to create the first round -->
+            <div id="createRoundContainer" class="text-center my-6">
+                <button id="createRoundBtn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition duration-300">
+                    Create My First Round!
+                </button>
             </div>
 
             <!-- Tab Buttons -->
