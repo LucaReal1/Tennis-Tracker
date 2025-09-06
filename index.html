@@ -8,31 +8,61 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #000;
         }
         .tab-button.active {
-            color: #2563EB;
-            border-left-width: 4px;
-            border-left-color: #2563EB;
-            background-color: #F3F4F6;
+            color: #fff;
+            background-color: #1D4ED8;
         }
+        .tab-button {
+             transition: all 0.2s ease-in-out;
+        }
+
+        /* Custom Chart.js Tooltip */
+        .chartjs-tooltip {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 0.5rem;
+            color: white;
+            padding: 8px 12px;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+         /* Scrollbar styles for a more modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center p-4">
+<body class="bg-black text-gray-300 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-7xl overflow-hidden flex flex-col lg:flex-row">
+    <div class="bg-slate-900 rounded-2xl shadow-2xl shadow-blue-500/10 w-full max-w-7xl overflow-hidden flex flex-col lg:flex-row border border-slate-800">
         
-        <div class="p-8 lg:p-12 w-full lg:w-1/3 flex flex-col justify-between">
+        <div class="p-8 lg:p-10 w-full lg:w-1/3 flex flex-col justify-between border-r border-slate-800">
             <div>
                 <div class="flex items-center justify-between mb-8">
-                    <h1 class="text-3xl lg:text-4xl font-extrabold text-blue-800">League Stats</h1>
+                    <h1 class="text-3xl lg:text-4xl font-black text-white tracking-tighter">League Stats</h1>
                 </div>
 
-                <div class="mb-6 text-sm text-gray-500 flex items-center space-x-2">
-                    <svg id="loadingIndicator" class="animate-spin h-5 w-5 text-blue-500 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <div class="mb-6 text-sm text-slate-400 flex items-center space-x-2">
+                    <svg id="loadingIndicator" class="animate-spin h-5 w-5 text-blue-400 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -42,8 +72,8 @@
                 <div id="messageBox" class="hidden"></div>
                 
                 <div id="createRoundContainer" class="flex flex-col items-start gap-4 hidden">
-                    <p class="text-gray-600 mb-2">No rounds found. Let's start a new one!</p>
-                    <button id="createRoundBtn" class="w-full flex justify-center items-center gap-2 bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-blue-600 active:scale-95 shadow-lg">
+                    <p class="text-slate-400 mb-2">No rounds found. Start the league!</p>
+                    <button id="createRoundBtn" class="w-full flex justify-center items-center gap-2 bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-blue-500 active:scale-95 shadow-lg shadow-blue-500/20">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                             <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
                         </svg>
@@ -52,7 +82,7 @@
                 </div>
                 
                 <div id="addNewRoundContainer" class="flex flex-col items-start gap-4 hidden">
-                    <button id="addNewRoundBtn" class="w-full flex justify-center items-center gap-2 bg-green-500 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-green-600 active:scale-95 shadow-lg">
+                    <button id="addNewRoundBtn" class="w-full flex justify-center items-center gap-2 bg-green-600 text-white font-semibold py-3 px-6 rounded-xl transition-all hover:bg-green-500 active:scale-95 shadow-lg shadow-green-500/20">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                             <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
                         </svg>
@@ -64,86 +94,78 @@
                 </div>
             </div>
             
-            <p class="text-xs text-gray-400 mt-8">Your app ID: <span class="font-mono" id="appIdDisplay"></span></p>
+            <p class="text-xs text-slate-500 mt-8">App ID: <span class="font-mono" id="appIdDisplay"></span></p>
         </div>
 
-        <div class="p-8 lg:p-12 w-full lg:w-2/3 bg-gray-50 overflow-y-auto">
-            <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Match Data & Statistics</h2>
+        <div class="p-8 lg:p-12 w-full lg:w-2/3 bg-black/50 overflow-y-auto" style="max-height: 90vh;">
+            <h2 class="text-3xl font-bold text-white mb-8 tracking-tight">Match Data & Statistics</h2>
 
             <div id="tabPanelsContainer" class="space-y-8">
             </div>
             
             <div class="mt-12 space-y-8">
-                <h2 class="text-2xl lg:text-3xl font-bold text-gray-800 mb-6">Overall Statistics</h2>
+                <h2 class="text-3xl font-bold text-white mb-6 tracking-tight">League Statistics</h2>
                 
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Leaderboard</h3>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <h3 class="text-xl font-bold text-white mb-4">League Leaderboard</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Games Played</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point Diff</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Player</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Wins</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Losses</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Played</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Win %</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Point Diff</th>
                                 </tr>
                             </thead>
-                            <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
+                            <tbody id="leagueLeaderboardBody" class="divide-y divide-slate-800">
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Most Dominant Win</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
+                        <h3 class="text-lg font-semibold text-white mb-3">Most Dominant Win</h3>
                         <div id="mostDominantWinContainer" class="flex flex-col items-center">
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Longest Winning Streak</h3>
+                    <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
+                        <h3 class="text-lg font-semibold text-white mb-3">Longest Win Streak</h3>
                         <div id="longestWinStreakContainer" class="flex flex-col items-center">
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Closest Match</h3>
+                    <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
+                        <h3 class="text-lg font-semibold text-white mb-3">Closest Match</h3>
                         <div id="closestMatchContainer" class="flex flex-col items-center">
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Performance Charts</h3>
+                <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <h3 class="text-xl font-bold text-white mb-6">Performance Charts</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Win/Loss Record</h4>
-                            <div class="h-64">
-                                <canvas id="winLossChart"></canvas>
-                            </div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Win/Loss Record</h4>
+                            <div class="h-64"><canvas id="winLossChart"></canvas></div>
                         </div>
                         <div>
-                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Total Games Played</h4>
-                            <div class="h-64">
-                                <canvas id="gamesPlayedChart"></canvas>
-                            </div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Games Played</h4>
+                            <div class="h-64"><canvas id="gamesPlayedChart"></canvas></div>
                         </div>
                         <div>
-                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Point Differential</h4>
-                            <div class="h-64">
-                                <canvas id="pointDifferentialChart"></canvas>
-                            </div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Point Differential</h4>
+                            <div class="h-64"><canvas id="pointDifferentialChart"></canvas></div>
                         </div>
                         <div>
-                            <h4 class="text-lg font-medium text-gray-700 text-center mb-2">Average Score per Game</h4>
-                            <div class="h-64">
-                                <canvas id="averageScoreChart"></canvas>
-                            </div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Average Score</h4>
+                            <div class="h-64"><canvas id="averageScoreChart"></canvas></div>
                         </div>
                     </div>
                 </div>
@@ -151,25 +173,31 @@
         </div>
     </div>
     
-    <div id="playerCountModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
-        <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
-            <h3 class="text-xl font-bold mb-4">Create a New Round</h3>
-            <p class="text-gray-600 mb-6">How many players are in this league?</p>
-            <input type="number" id="playerCountInput" placeholder="e.g. 4" class="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200">
+    <div id="playerNamesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl shadow-blue-500/20 scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-xl font-bold text-white mb-4">Create New Round</h3>
+            <p class="text-slate-400 mb-6">Enter the names of the players for this round. You need at least 2.</p>
+            <div id="playerNamesContainer" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <!-- Player name inputs will be dynamically added here -->
+            </div>
+            <button id="addPlayerBtn" class="w-full mt-4 flex justify-center items-center gap-2 bg-slate-800 text-slate-300 font-semibold py-2 px-4 rounded-lg transition-all hover:bg-slate-700 hover:text-white">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+                Add Player
+            </button>
             <div class="flex justify-end gap-4 mt-6">
-                <button id="cancelMatchesBtn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-gray-300">Cancel</button>
-                <button id="generateMatchesBtn" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-blue-600">Generate</button>
+                <button id="cancelMatchesBtn" class="bg-slate-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors hover:bg-slate-600">Cancel</button>
+                <button id="generateMatchesBtn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors hover:bg-blue-500">Generate Matches</button>
             </div>
         </div>
     </div>
     
-    <div id="confirmModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden transition-opacity duration-300">
-        <div class="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl scale-95 transition-transform duration-300 ease-out">
-            <h3 class="text-xl font-bold mb-4 text-red-600">Confirm Deletion</h3>
-            <p id="confirmText" class="text-gray-600 mb-6">Are you sure you want to delete this round? This action cannot be undone.</p>
+    <div id="confirmModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-sm w-full shadow-2xl shadow-red-500/20 scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-xl font-bold mb-4 text-red-500">Confirm Deletion</h3>
+            <p id="confirmText" class="text-slate-400 mb-6">Are you sure you want to delete this round? This action cannot be undone.</p>
             <div class="flex justify-end gap-4 mt-6">
-                <button id="cancelDeleteBtn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-gray-300">Cancel</button>
-                <button id="confirmDeleteBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-red-600">Delete</button>
+                <button id="cancelDeleteBtn" class="bg-slate-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors hover:bg-slate-600">Cancel</button>
+                <button id="confirmDeleteBtn" class="bg-red-600 text-white font-semibold py-2 px-5 rounded-lg transition-colors hover:bg-red-500">Delete</button>
             </div>
         </div>
     </div>
@@ -199,52 +227,91 @@
 
         let db, auth, userId;
         let chartInstances = {};
+        let allRoundsData = [];
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
             const spinner = document.getElementById('loadingIndicator');
-            if (spinner) spinner.style.display = 'block';
+            if (spinner) spinner.classList.remove('hidden');
         };
 
         const hideLoadingSpinner = () => {
             const spinner = document.getElementById('loadingIndicator');
-            if (spinner) spinner.style.display = 'none';
+            if (spinner) spinner.classList.add('hidden');
         };
 
         // Function to show a temporary message
         const showMessage = (message, type = 'success') => {
             const messageBox = document.getElementById('messageBox');
             messageBox.innerText = message;
-            messageBox.style.display = 'block';
-            messageBox.className = `p-3 rounded-lg text-white mb-4 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            messageBox.classList.remove('hidden');
+            messageBox.className = `p-3 rounded-lg text-white font-semibold mb-4 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
             setTimeout(() => {
-                messageBox.style.display = 'none';
+                messageBox.classList.add('hidden');
             }, 3000);
         };
         
         // Modal functions
-        const showPlayerCountModal = () => {
-            const modal = document.getElementById('playerCountModal');
-            modal.classList.remove('hidden');
+        const playerNamesContainer = document.getElementById('playerNamesContainer');
+
+        const addPlayerInput = (name = "") => {
+            if(!playerNamesContainer) return;
+            const inputWrapper = document.createElement('div');
+            inputWrapper.className = 'flex items-center gap-2';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Player ${playerNamesContainer.children.length + 1}`;
+            input.className = 'w-full bg-slate-800 text-white px-4 py-2 rounded-lg border border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors';
+            input.value = name;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'text-slate-500 hover:text-red-500 transition-colors p-1';
+            removeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>`;
+            removeBtn.onclick = () => {
+                inputWrapper.remove();
+                // re-placeholder the inputs
+                const inputs = playerNamesContainer.querySelectorAll('input');
+                inputs.forEach((inp, i) => {
+                    inp.placeholder = `Player ${i + 1}`;
+                });
+            };
+            
+            inputWrapper.append(input, removeBtn);
+            playerNamesContainer.appendChild(inputWrapper);
+            input.focus();
         };
 
-        const hidePlayerCountModal = () => {
-            const modal = document.getElementById('playerCountModal');
+        const showPlayerNamesModal = () => {
+            const modal = document.getElementById('playerNamesModal');
+            playerNamesContainer.innerHTML = '';
+            // Add 2 initial inputs
+            addPlayerInput();
+            addPlayerInput();
+            modal.classList.remove('hidden');
+            modal.querySelector('div').classList.remove('scale-95');
+        };
+
+        const hidePlayerNamesModal = () => {
+            const modal = document.getElementById('playerNamesModal');
+            modal.querySelector('div').classList.add('scale-95');
             modal.classList.add('hidden');
         };
 
         // Function to generate and save matches based on player count
         const generateAndSaveMatches = async () => {
-            const playerCountInput = document.getElementById('playerCountInput');
-            const playerCount = parseInt(playerCountInput.value, 10);
-            hidePlayerCountModal();
-
-            if (isNaN(playerCount) || playerCount < 2) {
-                showMessage("Please enter a valid number of players (2 or more).", "error");
+            const playerInputs = document.querySelectorAll('#playerNamesContainer input');
+            const players = Array.from(playerInputs)
+                .map(input => input.value.trim())
+                .filter(name => name !== '');
+            
+            if (players.length < 2) {
+                showMessage("Please enter at least two player names.", "error");
                 return;
             }
+            
+            hidePlayerNamesModal();
 
-            console.log("Generating matches for " + playerCount + " players.");
+            console.log("Generating matches for players:", players);
             showLoadingSpinner();
 
             try {
@@ -253,7 +320,6 @@
                     return;
                 }
 
-                let players = Array.from({ length: playerCount }, (_, i) => `Player ${i + 1}`);
                 let newMatches = [];
                 if (players.length % 2 !== 0) {
                     players.push("Bye");
@@ -361,10 +427,16 @@
                     showMessage("Error deleting match.", "error");
                 } finally {
                     hideLoadingSpinner();
+                    confirmDeleteBtn.removeEventListener('click', onConfirm);
+                    cancelDeleteBtn.removeEventListener('click', onCancel);
                 }
             };
             
-            const onCancel = () => confirmModal.classList.add('hidden');
+            const onCancel = () => {
+                 confirmModal.classList.add('hidden');
+                 confirmDeleteBtn.removeEventListener('click', onConfirm);
+                 cancelDeleteBtn.removeEventListener('click', onCancel);
+            }
 
             confirmDeleteBtn.addEventListener('click', onConfirm, { once: true });
             cancelDeleteBtn.addEventListener('click', onCancel, { once: true });
@@ -451,30 +523,35 @@
                     userId = user.uid;
                     document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
                     
-                    document.getElementById('createRoundBtn')?.addEventListener('click', showPlayerCountModal);
-                    document.getElementById('addNewRoundBtn')?.addEventListener('click', showPlayerCountModal);
+                    document.getElementById('createRoundBtn')?.addEventListener('click', showPlayerNamesModal);
+                    document.getElementById('addNewRoundBtn')?.addEventListener('click', showPlayerNamesModal);
+                    document.getElementById('addPlayerBtn')?.addEventListener('click', () => addPlayerInput());
                     document.getElementById('generateMatchesBtn')?.addEventListener('click', generateAndSaveMatches);
-                    document.getElementById('cancelMatchesBtn')?.addEventListener('click', hidePlayerCountModal);
+                    document.getElementById('cancelMatchesBtn')?.addEventListener('click', hidePlayerNamesModal);
                     
                     onValue(ref(db, databasePath), (snapshot) => {
                         const rounds = snapshot.val() || {};
-                        const roundsArray = Object.keys(rounds).map(key => ({ id: key, name: key, ...rounds[key] }));
+                        allRoundsData = Object.keys(rounds).map(key => ({ id: key, name: key, ...rounds[key] }));
                         const createRoundContainer = document.getElementById('createRoundContainer');
                         const addNewRoundContainer = document.getElementById('addNewRoundContainer');
         
-                        if (roundsArray.length > 0) {
+                        if (allRoundsData.length > 0) {
                             createRoundContainer.style.display = 'none';
                             addNewRoundContainer.style.display = 'block';
-                            populateTabs(roundsArray);
-                            const firstTabId = `tab-${roundsArray.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                            showTab(firstTabId);
-                            updateOverallStats(roundsArray);
+                            populateTabs(allRoundsData);
+                            // Find the currently active tab to preserve it, otherwise default to the first.
+                            let activeTab = document.querySelector('.tab-button.active');
+                            if (!activeTab || !document.getElementById(activeTab.id)) {
+                                const firstTabId = `tab-${allRoundsData.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                                showTab(firstTabId);
+                            }
+                            updateLeagueStats(allRoundsData);
                         } else {
                             createRoundContainer.style.display = 'block';
                             addNewRoundContainer.style.display = 'none';
                             document.getElementById('tabList').innerHTML = '';
                             document.getElementById('tabPanelsContainer').innerHTML = '';
-                            updateOverallStats([]);
+                            updateLeagueStats([]);
                         }
                         hideLoadingSpinner();
                     }, (error) => {
@@ -497,7 +574,7 @@
         const createPlayerInput = (roundId, matchIndex, field, value) => {
             const input = document.createElement('input');
             input.type = 'text';
-            input.className = 'w-32 text-center text-lg bg-transparent focus:bg-white focus:ring-1 focus:ring-blue-500 rounded-md py-1 px-2 transition-colors';
+            input.className = 'w-32 text-center text-lg bg-transparent focus:bg-slate-700 focus:ring-1 focus:ring-blue-500 rounded-lg py-1 px-2 transition-colors text-white';
             input.value = value;
             input.onblur = (e) => saveMatchData(roundId, matchIndex, field, e.target.value.trim());
             return input;
@@ -506,7 +583,7 @@
         const createScoreInput = (roundId, matchIndex, field, value) => {
             const input = document.createElement('input');
             input.type = 'number';
-            input.className = 'w-16 text-center text-xl font-bold bg-white border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 py-1';
+            input.className = 'w-20 text-center text-2xl font-bold bg-slate-800 border border-slate-700 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 text-white';
             input.value = value;
             input.min = "0";
             input.onchange = (e) => {
@@ -518,11 +595,78 @@
         
         const createDeleteMatchButton = (roundId, matchIndex) => {
              const button = document.createElement('button');
-             button.className = 'text-gray-400 hover:text-red-500 transition-colors';
-             button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 1 0 .23 1.482l.149-.046A12.705 12.705 0 0 1 12 15.25a.75.75 0 0 0 1.5 0A14.205 14.205 0 0 0 4.08 6.182l-.149.046a.75.75 0 1 0-.23-1.482A14.253 14.253 0 0 0 6 4.193V3.75A1.25 1.25 0 0 1 7.25 2.5h5.5A1.25 1.25 0 0 1 14 3.75v.443c.795.077 1.58.22 2.365.468a.75.75 0 1 0 .23 1.482l-.149-.046A12.705 12.705 0 0 1 8 15.25a.75.75 0 0 0-1.5 0A14.205 14.205 0 0 0 15.92 6.182l.149.046a.75.75 0 1 0 .23-1.482A14.253 14.253 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5Z" clip-rule="evenodd" /></svg>`;
+             button.className = 'text-slate-500 hover:text-red-500 transition-colors';
+             button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>`;
              button.onclick = () => deleteMatch(roundId, matchIndex);
              return button;
         }
+
+        const renderRoundLeaderboard = (round, leaderboardBodyId) => {
+            const playerStats = {};
+
+            const getStatEntry = (playerName) => {
+                if (!playerStats[playerName]) {
+                    playerStats[playerName] = {
+                        wins: 0, losses: 0, gamesPlayed: 0,
+                        totalPoints: 0, pointDifferential: 0
+                    };
+                }
+                return playerStats[playerName];
+            };
+
+            (round.matches || []).forEach(match => {
+                if(!match.playerA || !match.playerB) return;
+                
+                const statsA = getStatEntry(match.playerA);
+                const statsB = getStatEntry(match.playerB);
+
+                if (match.scoreA > 0 || match.scoreB > 0) {
+                    statsA.gamesPlayed++;
+                    statsB.gamesPlayed++;
+                    statsA.totalPoints += match.scoreA;
+                    statsB.totalPoints += match.scoreB;
+                    statsA.pointDifferential += match.scoreA - match.scoreB;
+                    statsB.pointDifferential += match.scoreB - match.scoreA;
+                    
+                    if (match.scoreA > match.scoreB) {
+                        statsA.wins++;
+                        statsB.losses++;
+                    } else if (match.scoreB > match.scoreA) {
+                        statsB.wins++;
+                        statsA.losses++;
+                    }
+                }
+            });
+
+            const leaderboardBody = document.getElementById(leaderboardBodyId);
+            if (!leaderboardBody) return;
+            leaderboardBody.innerHTML = '';
+
+            const sortedPlayers = Object.entries(playerStats).sort(([, a], [, b]) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return b.pointDifferential - a.pointDifferential;
+            });
+            
+            if (sortedPlayers.length === 0) {
+                leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No match data for this round.</td></tr>`;
+            } else {
+                sortedPlayers.forEach(([name, stats], index) => {
+                    const winPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100).toFixed(1) : 0;
+                    const avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed).toFixed(1) : 0;
+                    const row = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${winPercentage}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${avgScore}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                    `;
+                    leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
+                });
+            }
+        };
 
         const populateTabs = (rounds) => {
             const tabList = document.querySelector('[role="tablist"]');
@@ -530,12 +674,12 @@
             tabList.innerHTML = '';
             tabPanels.innerHTML = '';
 
-            rounds.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach((round, index) => {
+            rounds.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach((round) => {
                 const sanitizedId = round.id.replace(/[^a-zA-Z0-9]/g, '-');
                 const tabButtonContainer = document.createElement('div');
                 tabButtonContainer.className = 'flex items-center w-full group';
                 const tabButton = document.createElement('button');
-                tabButton.className = 'tab-button flex-grow text-left text-lg font-semibold text-gray-500 py-3 px-6 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors border-l-4 border-l-transparent';
+                tabButton.className = 'tab-button flex-grow text-left text-lg font-semibold text-slate-400 py-3 px-5 hover:bg-slate-800 hover:text-white rounded-lg cursor-pointer';
                 tabButton.setAttribute('role', 'tab');
                 tabButton.setAttribute('id', `tab-${sanitizedId}`);
                 tabButton.setAttribute('aria-selected', 'false');
@@ -549,7 +693,7 @@
                 tabNameSpan.onkeydown = (e) => { if (e.key === 'Enter') e.target.blur(); };
                 tabButton.appendChild(tabNameSpan);
                 const deleteRoundBtn = document.createElement('button');
-                deleteRoundBtn.className = 'ml-2 p-2 text-gray-400 hover:text-red-600 rounded-full hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100';
+                deleteRoundBtn.className = 'ml-2 p-2 text-slate-500 hover:text-red-500 rounded-full hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100';
                 deleteRoundBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" /></svg>`;
                 deleteRoundBtn.onclick = (e) => { e.stopPropagation(); deleteRound(round.id); };
                 tabButtonContainer.append(tabButton, deleteRoundBtn);
@@ -561,16 +705,16 @@
                 tabPanel.setAttribute('role', 'tabpanel');
                 tabPanel.setAttribute('aria-labelledby', `tab-${sanitizedId}`);
                 const panelContent = document.createElement('div');
-                panelContent.className = 'bg-white p-6 rounded-xl shadow-lg';
+                panelContent.className = 'bg-slate-900/70 border border-slate-800 p-6 rounded-2xl space-y-6';
                 const matchesContainer = document.createElement('div');
                 matchesContainer.className = 'space-y-4';
                 (round.matches || []).forEach((match, matchIndex) => {
                     const matchRow = document.createElement('div');
-                    matchRow.className = 'grid grid-cols-[1fr_auto_auto_auto_1fr_auto] gap-4 items-center p-3 bg-gray-50 rounded-lg';
+                    matchRow.className = 'grid grid-cols-[1fr_auto_auto_auto_1fr_auto] gap-4 items-center p-3 bg-slate-800/50 rounded-lg';
                     const playerAInput = createPlayerInput(round.id, matchIndex, 'playerA', match.playerA);
                     const scoreAInput = createScoreInput(round.id, matchIndex, 'scoreA', match.scoreA);
                     const vsSpan = document.createElement('span');
-                    vsSpan.className = 'text-gray-500 font-bold px-2';
+                    vsSpan.className = 'text-slate-400 font-bold px-2';
                     vsSpan.innerText = 'vs';
                     const scoreBInput = createScoreInput(round.id, matchIndex, 'scoreB', match.scoreB);
                     const playerBInput = createPlayerInput(round.id, matchIndex, 'playerB', match.playerB);
@@ -580,12 +724,38 @@
                     matchesContainer.appendChild(matchRow);
                 });
                 const addMatchBtn = document.createElement('button');
-                addMatchBtn.className = 'mt-6 w-full flex justify-center items-center gap-2 bg-blue-100 text-blue-700 font-semibold py-3 px-6 rounded-xl transition-all hover:bg-blue-200 active:scale-95';
+                addMatchBtn.className = 'w-full flex justify-center items-center gap-2 bg-slate-800 text-slate-300 font-semibold py-3 px-6 rounded-xl transition-all hover:bg-slate-700 hover:text-white active:scale-95';
                 addMatchBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg> Add Match`;
                 addMatchBtn.onclick = () => addMatch(round.id);
-                panelContent.append(matchesContainer, addMatchBtn);
+
+                const roundLeaderboardContainer = document.createElement('div');
+                roundLeaderboardContainer.innerHTML = `
+                    <h3 class="text-xl font-bold text-white mb-4">Round Leaderboard</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                           <thead class="border-b border-slate-700">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Rank</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Player</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Wins</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Losses</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Played</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Win %</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Avg Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Point Diff</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body-${sanitizedId}" class="divide-y divide-slate-800">
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                panelContent.append(matchesContainer, addMatchBtn, roundLeaderboardContainer);
                 tabPanel.appendChild(panelContent);
                 tabPanels.appendChild(tabPanel);
+                
+                renderRoundLeaderboard(round, `leaderboard-body-${sanitizedId}`);
             });
         };
 
@@ -609,16 +779,16 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             if (!value && !subtext) {
-                container.innerHTML = `<p class="text-gray-500">No data available.</p>`;
+                container.innerHTML = `<p class="text-slate-400">No data available.</p>`;
                 return;
             }
             container.innerHTML = `
-                <p class="text-3xl font-bold text-blue-600">${value}</p>
-                <p class="text-sm text-gray-600 mt-1">${subtext}</p>
+                <p class="text-4xl font-extrabold text-white">${value}</p>
+                <p class="text-sm text-slate-400 mt-1">${subtext}</p>
             `;
         }
 
-        const updateOverallStats = (rounds) => {
+        const updateLeagueStats = (rounds) => {
             const playerStats = {};
             let allMatches = [];
 
@@ -641,7 +811,6 @@
                     const statsA = getStatEntry(match.playerA);
                     const statsB = getStatEntry(match.playerB);
 
-                    // Only update stats if a score has been entered for the match
                     if (match.scoreA > 0 || match.scoreB > 0) {
                         statsA.gamesPlayed++;
                         statsB.gamesPlayed++;
@@ -692,17 +861,18 @@
             let dominantWin = null;
             let closestMatch = null;
             allMatches.forEach(match => {
+                if (match.scoreA === 0 && match.scoreB === 0) return; // Skip unscored matches
                 const diff = Math.abs(match.scoreA - match.scoreB);
                 if (!dominantWin || diff > Math.abs(dominantWin.scoreA - dominantWin.scoreB)) {
                     dominantWin = match;
                 }
-                if ((!closestMatch || diff < Math.abs(closestMatch.scoreA - closestMatch.scoreB)) && diff > 0) {
+                if (!closestMatch || diff < Math.abs(closestMatch.scoreA - closestMatch.scoreB)) {
                    closestMatch = match;
                 }
             });
 
             // --- Render Leaderboard ---
-            const leaderboardBody = document.getElementById('leaderboardBody');
+            const leaderboardBody = document.getElementById('leagueLeaderboardBody');
             leaderboardBody.innerHTML = '';
             const sortedPlayers = Object.entries(playerStats).sort(([, a], [, b]) => {
                 if (b.wins !== a.wins) return b.wins - a.wins;
@@ -710,20 +880,20 @@
             });
 
             if (sortedPlayers.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No player data available.</td></tr>`;
+                leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No player data available.</td></tr>`;
             } else {
                 sortedPlayers.forEach(([name, stats], index) => {
                     const row = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold">${name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">${stats.wins}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">${stats.losses}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${stats.gamesPlayed}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${stats.winPercentage}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${stats.avgScore}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-600' : 'text-orange-600'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">${index + 1}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-white font-semibold">${name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
                     `;
-                    leaderboardBody.innerHTML += `<tr>${row}</tr>`;
+                    leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
                 });
             }
 
@@ -734,7 +904,7 @@
             } else {
                 renderStatCard('mostDominantWinContainer');
             }
-             if (longestStreak.player) {
+             if (longestStreak.player && longestStreak.streak > 0) {
                 renderStatCard('longestWinStreakContainer', 'Longest Winning Streak', `${longestStreak.streak} wins`, `by ${longestStreak.player}`);
             } else {
                 renderStatCard('longestWinStreakContainer');
@@ -756,7 +926,7 @@
                 avgScore: sortedPlayers.map(([, stats]) => stats.avgScore),
             };
 
-            const chartColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1'];
+            const chartColors = ['#2563EB', '#16A34A', '#F59E0B', '#DC2626', '#9333EA', '#DB2777', '#4F46E5', '#D946EF'];
 
             const createOrUpdateChart = (chartId, type, labels, datasets, options = {}) => {
                 if (chartInstances[chartId]) {
@@ -764,31 +934,48 @@
                 }
                 const ctx = document.getElementById(chartId)?.getContext('2d');
                 if (!ctx) return;
-                chartInstances[chartId] = new Chart(ctx, { type, data: { labels, datasets }, options });
+                
+                const defaultOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8' } },
+                    },
+                    scales: {
+                       x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'} },
+                       y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148, 163, 184, 0.1)'}, beginAtZero: true }
+                    }
+                };
+                
+                chartInstances[chartId] = new Chart(ctx, { type, data: { labels, datasets }, options: {...defaultOptions, ...options} });
             };
 
             createOrUpdateChart('winLossChart', 'bar', chartLabels, [
-                { label: 'Wins', data: chartData.wins, backgroundColor: '#10B981' },
-                { label: 'Losses', data: chartData.losses, backgroundColor: '#EF4444' }
-            ], { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } });
+                { label: 'Wins', data: chartData.wins, backgroundColor: '#22c55e' },
+                { label: 'Losses', data: chartData.losses, backgroundColor: '#ef4444' }
+            ], { scales: { x: { stacked: true }, y: { stacked: true } } });
 
             createOrUpdateChart('gamesPlayedChart', 'doughnut', chartLabels, [{
                 label: 'Games Played',
                 data: chartData.gamesPlayed,
                 backgroundColor: chartColors,
-            }]);
+                borderColor: '#1e293b',
+            }], { plugins: { legend: { position: 'top' } } });
 
             createOrUpdateChart('pointDifferentialChart', 'bar', chartLabels, [{
                 label: 'Point Differential',
                 data: chartData.pointDifferential,
-                backgroundColor: chartData.pointDifferential.map(v => v >= 0 ? '#3B82F6' : '#F97316'),
+                backgroundColor: chartData.pointDifferential.map(v => v >= 0 ? '#3b82f6' : '#f97316'),
             }]);
             
-            createOrUpdateChart('averageScoreChart', 'bar', chartLabels, [{
+            createOrUpdateChart('averageScoreChart', 'line', chartLabels, [{
                 label: 'Average Score',
                 data: chartData.avgScore,
-                backgroundColor: '#8B5CF6',
-            }], { scales: { y: { beginAtZero: true } } });
+                backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                borderColor: '#a855f7',
+                tension: 0.3,
+                fill: true,
+            }]);
         };
 
 
@@ -796,5 +983,4 @@
     </script>
 </body>
 </html>
-
 
