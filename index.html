@@ -137,23 +137,36 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                 <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <h3 class="text-xl font-bold text-white mb-4">Rivalry Tracker</h3>
+                    <div class="flex items-center gap-4 mb-4">
+                        <select id="player1Select" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full"></select>
+                        <span class="font-bold text-slate-400">VS</span>
+                        <select id="player2Select" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full"></select>
+                    </div>
+                    <div id="rivalryResultContainer">
+                         <p class="text-center text-slate-500">Select two different players to see their head-to-head stats.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                     <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
                         <h3 class="text-lg font-semibold text-white mb-3">Most Dominant Win</h3>
-                        <div id="mostDominantWinContainer" class="flex flex-col items-center">
-                        </div>
+                        <div id="mostDominantWinContainer" class="flex flex-col items-center"></div>
                     </div>
 
                     <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
-                        <h3 class="text-lg font-semibold text-white mb-3">Longest Win Streak</h3>
-                        <div id="longestWinStreakContainer" class="flex flex-col items-center">
-                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-3">Longest Winning Streak</h3>
+                        <div id="longestWinStreakContainer" class="flex flex-col items-center"></div>
                     </div>
 
                     <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
                         <h3 class="text-lg font-semibold text-white mb-3">Closest Match</h3>
-                        <div id="closestMatchContainer" class="flex flex-col items-center">
-                        </div>
+                        <div id="closestMatchContainer" class="flex flex-col items-center"></div>
+                    </div>
+                     <div class="bg-slate-900/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center border border-slate-800">
+                        <h3 class="text-lg font-semibold text-white mb-3">Most Improved Player</h3>
+                        <div id="mostImprovedPlayerContainer" class="flex flex-col items-center"></div>
                     </div>
                 </div>
                 
@@ -834,7 +847,9 @@
                 return playerStats[playerName];
             };
 
-            rounds.forEach(round => {
+            const sortedRounds = [...rounds].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+
+            sortedRounds.forEach(round => {
                 (round.matches || []).forEach(match => {
                     if(!match.playerA || !match.playerB) return;
                     
@@ -895,13 +910,15 @@
             const { column, direction } = leagueSortState;
 
             sortedPlayers.sort((a, b) => {
-                const aVal = (column === 'name') ? a[column] : parseFloat(a[column] || 0);
-                const bVal = (column === 'name') ? b[column] : parseFloat(b[column] || 0);
+                let aVal = a[column];
+                let bVal = b[column];
 
-                if (typeof aVal === 'string') {
-                    return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                if (column === 'name') {
+                   // string comparison
+                   return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
                 } else {
-                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                   // numeric comparison
+                   return direction === 'asc' ? aVal - bVal : bVal - aVal;
                 }
             });
 
@@ -959,8 +976,48 @@
             } else {
                 renderStatCard('closestMatchContainer');
             }
+            
+            // --- Most Improved Player ---
+            let mostImproved = { player: null, improvement: -Infinity };
+            if (sortedRounds.length > 1) {
+                const allPlayers = Object.keys(playerStats);
+                allPlayers.forEach(playerName => {
+                    let firstRoundStats = null;
+                    let lastRoundStats = null;
 
-            // --- Render Charts ---
+                    for(const round of sortedRounds) {
+                        const playerInRound = round.matches.some(m => m.playerA === playerName || m.playerB === playerName);
+                        if(playerInRound) {
+                            if (!firstRoundStats) {
+                                const stats = getPlayerStatsForRound(round, playerName);
+                                if (stats.gamesPlayed > 0) firstRoundStats = stats;
+                            }
+                             const stats = getPlayerStatsForRound(round, playerName);
+                             if (stats.gamesPlayed > 0) lastRoundStats = stats;
+                        }
+                    }
+                    
+                    if (firstRoundStats && lastRoundStats && firstRoundStats !== lastRoundStats) {
+                        const improvement = lastRoundStats.winPercentage - firstRoundStats.winPercentage;
+                        if (improvement > mostImproved.improvement) {
+                            mostImproved = { player: playerName, improvement };
+                        }
+                    }
+                });
+            }
+
+            if (mostImproved.player && mostImproved.improvement > 0) {
+                 renderStatCard('mostImprovedPlayerContainer', 'Most Improved', `+${mostImproved.improvement.toFixed(1)}%`, `by ${mostImproved.player}`);
+            } else {
+                 renderStatCard('mostImprovedPlayerContainer');
+            }
+
+
+            // --- Render Charts & Rivalry ---
+            const allPlayerNames = Object.keys(playerStats);
+            updateRivalryDropdowns(allPlayerNames);
+            updateRivalryStats(allMatches);
+
             const chartLabels = sortedPlayers.map(p => p.name);
             const chartData = {
                 wins: sortedPlayers.map(p => p.wins),
@@ -1021,13 +1078,79 @@
                 fill: true,
             }]);
         };
+        
+        function getPlayerStatsForRound(round, playerName) {
+            const stats = { gamesPlayed: 0, totalPoints: 0, totalPointsAgainst: 0 };
+            (round.matches || []).forEach(match => {
+                if (match.playerA === playerName) {
+                    if (match.scoreA > 0 || match.scoreB > 0) {
+                        stats.gamesPlayed++;
+                        stats.totalPoints += match.scoreA;
+                        stats.totalPointsAgainst += match.scoreB;
+                    }
+                } else if (match.playerB === playerName) {
+                    if (match.scoreA > 0 || match.scoreB > 0) {
+                        stats.gamesPlayed++;
+                        stats.totalPoints += match.scoreB;
+                        stats.totalPointsAgainst += match.scoreA;
+                    }
+                }
+            });
+            const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
+            stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+            return stats;
+        }
+
+
+        function updateRivalryDropdowns(playerNames) {
+            const p1Select = document.getElementById('player1Select');
+            const p2Select = document.getElementById('player2Select');
+            const currentP1 = p1Select.value;
+            const currentP2 = p2Select.value;
+            p1Select.innerHTML = '<option value="">Select Player 1</option>';
+            p2Select.innerHTML = '<option value="">Select Player 2</option>';
+            playerNames.forEach(name => {
+                p1Select.innerHTML += `<option value="${name}">${name}</option>`;
+                p2Select.innerHTML += `<option value="${name}">${name}</option>`;
+            });
+            p1Select.value = currentP1;
+            p2Select.value = currentP2;
+        }
+
+        function updateRivalryStats(allMatches) {
+            const p1 = document.getElementById('player1Select').value;
+            const p2 = document.getElementById('player2Select').value;
+            const container = document.getElementById('rivalryResultContainer');
+
+            if (!p1 || !p2 || p1 === p2) {
+                container.innerHTML = `<p class="text-center text-slate-500">Select two different players to see their head-to-head stats.</p>`;
+                return;
+            }
+
+            let p1Wins = 0, p2Wins = 0, totalGames = 0;
+            allMatches.forEach(match => {
+                if ((match.playerA === p1 && match.playerB === p2) || (match.playerA === p2 && match.playerB === p1)) {
+                    totalGames++;
+                    if (match.playerA === p1 && match.scoreA > match.scoreB) p1Wins++;
+                    else if(match.playerB === p1 && match.scoreB > match.scoreA) p1Wins++;
+                    else if (match.scoreA !== match.scoreB) p2Wins++;
+                }
+            });
+            
+            container.innerHTML = `
+                <div class="text-center">
+                    <p class="text-4xl font-extrabold text-white">${p1Wins} - ${p2Wins}</p>
+                    <p class="text-sm text-slate-400 mt-1">in ${totalGames} games</p>
+                </div>
+            `;
+        }
+
 
         function setupSorting(tableId, stateObject, renderFunction, round) {
             const table = document.getElementById(tableId);
             if (!table) return;
 
             table.querySelectorAll('.sortable-header').forEach(header => {
-                // Clear existing listeners to prevent duplicates
                 const newHeader = header.cloneNode(true);
                 header.parentNode.replaceChild(newHeader, header);
 
@@ -1036,7 +1159,7 @@
                     const isRound = !!round;
                     const stateKey = isRound ? round.id : 'league';
                     
-                    const currentState = isRound ? (stateObject[stateKey] || { column: 'wins', direction: 'desc' }) : stateObject;
+                    const currentState = isRound ? (stateObject[stateKey] || { column: 'wins', direction: 'desc' }) : leagueSortState;
                     
                     let direction = 'desc';
                     if (currentState.column === column && currentState.direction === 'desc') {
@@ -1065,6 +1188,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeFirebase();
             setupSorting('leagueLeaderboardTable', leagueSortState, updateLeagueStats);
+            document.getElementById('player1Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
+            document.getElementById('player2Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
         });
     </script>
 </body>
