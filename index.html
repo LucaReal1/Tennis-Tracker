@@ -68,7 +68,7 @@
             modal.classList.add('hidden');
         };
 
-        // Fisher-Yates shuffle algorithm
+        // Fisher-Yates shuffle algorithm (no longer used for match generation but kept for general use)
         const shuffleArray = (array) => {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -78,7 +78,7 @@
         };
 
         // Function to generate and save matches based on player count
-        const generateAndSaveMatches = async (isFirstRound = false) => {
+        const generateAndSaveMatches = async () => {
             const playerCountInput = document.getElementById('playerCountInput');
             const playerCount = parseInt(playerCountInput.value, 10);
             hidePlayerCountModal();
@@ -98,30 +98,64 @@
                 }
 
                 // Create an array of player names
-                const players = Array.from({ length: playerCount }, (_, i) => `Player ${i + 1}`);
+                let players = Array.from({ length: playerCount }, (_, i) => `Player ${i + 1}`);
 
-                // Generate all unique pairings
-                const newMatches = [];
-                for (let i = 0; i < players.length; i++) {
-                    for (let j = i + 1; j < players.length; j++) {
-                        newMatches.push({
-                            playerA: players[i],
-                            scoreA: 0,
-                            scoreB: 0,
-                            playerB: players[j]
-                        });
-                    }
+                // --- START of new round-robin scheduling logic ---
+                let newMatches = [];
+                let isOddPlayerCount = players.length % 2 !== 0;
+
+                // If odd number of players, add a dummy player for a "bye" round
+                if (isOddPlayerCount) {
+                    players.push("Bye");
                 }
-                
-                // Shuffle the matches to randomize the order
-                const shuffledMatches = shuffleArray(newMatches);
+
+                const numPlayers = players.length;
+                const rounds = numPlayers - 1;
+                const half = numPlayers / 2;
+
+                // Use the circle method for scheduling to maximize rest
+                // Fix the first player and rotate the others
+                let fixedPlayer = players[0];
+                let rotatingPlayers = players.slice(1);
+
+                for (let round = 0; round < rounds; round++) {
+                    // Create matches for this round
+                    for (let i = 0; i < half; i++) {
+                        let playerA, playerB;
+                        if (i === 0) {
+                            // The fixed player plays against the first rotating player
+                            playerA = fixedPlayer;
+                            playerB = rotatingPlayers[0];
+                        } else {
+                            // Pair players from opposite ends of the rotating list
+                            playerA = rotatingPlayers[i];
+                            playerB = rotatingPlayers[numPlayers - 2 - i];
+                        }
+
+                        // Only add matches if neither player is the "Bye" player
+                        if (playerA !== "Bye" && playerB !== "Bye") {
+                            newMatches.push({
+                                playerA: playerA,
+                                scoreA: 0,
+                                scoreB: 0,
+                                playerB: playerB
+                            });
+                        }
+                    }
+
+                    // Rotate the players for the next round
+                    const lastPlayer = rotatingPlayers.pop();
+                    rotatingPlayers.unshift(lastPlayer);
+                }
+
+                // --- END of new round-robin scheduling logic ---
 
                 const snapshot = await get(ref(db, databasePath));
-                const rounds = snapshot.val() || {};
-                const nextRoundNumber = Object.keys(rounds).length + 1;
+                const existingRounds = snapshot.val() || {};
+                const nextRoundNumber = Object.keys(existingRounds).length + 1;
                 const newRoundName = `Round ${nextRoundNumber}`;
                 
-                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: shuffledMatches });
+                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: newMatches });
                 console.log(`'${newRoundName}' created with generated matches!`);
                 showMessage(`New round created with all ${newMatches.length} matches!`, "success");
 
@@ -628,130 +662,125 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center">
+    <header class="w-full max-w-7xl px-4 py-8 bg-white shadow-md rounded-b-lg">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+            <h1 class="text-4xl font-extrabold text-blue-600 mb-2 md:mb-0">Friends Tennis League</h1>
+            <div id="userIdDisplay" class="text-xs text-gray-400">Loading user...</div>
+        </div>
+        <div id="messageBox" class="hidden text-center"></div>
+    </header>
 
-    <div class="container mx-auto p-4 sm:p-6 md:p-8">
-        <header class="text-center mb-6">
-            <h1 class="text-4xl md:text-5xl font-black text-blue-600 tracking-tight">FRIENDS TENNIS LEAGUE</h1>
-            <p class="text-lg text-gray-600 mt-2">The Official Leaderboard & Performance Analytics</p>
-            <p id="userIdDisplay" class="text-sm font-semibold mt-2 text-gray-500 break-all"></p>
-        </header>
+    <main class="w-full max-w-7xl px-4 py-8 flex-grow">
+        <div id="loadingIndicator" class="hidden flex justify-center items-center py-8">
+            <div class="loading-spinner"></div>
+        </div>
+        <div id="createRoundContainer" class="hidden flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow-lg text-center">
+            <h2 class="text-2xl font-bold mb-4">Start Your First Round!</h2>
+            <p class="mb-6 text-gray-500">Create a new round and generate matches for all players.</p>
+            <button id="createRoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-colors duration-200 shadow-lg">
+                Create New Round
+            </button>
+        </div>
 
-        <!-- Data Table Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Edit Match Data Below</h2>
-            <p class="text-gray-600 mb-6">Click on a tab to select a round. The leaderboard and charts below will update in real-time for everyone!</p>
-
-            <div id="messageBox" class="p-3 rounded-lg text-white mb-4 hidden"></div>
-            
-            <div class="text-center py-4" id="loadingIndicator">
-                <div class="loading-spinner mx-auto"></div>
-                <p class="mt-2 text-gray-500">Loading data...</p>
-            </div>
-
-            <!-- New button to create the first round -->
-            <div id="createRoundContainer" class="text-center my-6">
-                <button id="createRoundBtn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-700 transition-colors duration-200 transform hover:scale-105">
-                    Start Your First Round
+        <div id="addNewRoundContainer" class="hidden">
+            <!-- Tabs for rounds -->
+            <div class="flex items-center justify-between border-b border-gray-200 mb-6">
+                <div id="tabList" role="tablist" aria-label="Rounds" class="flex flex-wrap -mb-px">
+                    <!-- Tabs will be populated here -->
+                </div>
+                <button id="addNewRoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-full transition-colors duration-200 shadow-md flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                    </svg>
+                    New Round
                 </button>
             </div>
             
-            <!-- Player Count Modal -->
-            <div id="playerCountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-                <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
-                    <div class="mt-3 text-center">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">How Many Players?</h3>
-                        <div class="mt-2 px-7 py-3">
-                            <p class="text-sm text-gray-500">
-                                Enter the number of players for this round. The app will automatically generate all the matches for you.
-                            </p>
-                            <input type="number" id="playerCountInput" min="2" class="mt-4 w-full p-2 border-2 border-gray-300 rounded-lg text-center font-bold text-xl" placeholder="e.g., 4" />
-                        </div>
-                        <div class="items-center px-4 py-3">
-                            <button id="generateMatchesBtn" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
-                                Generate Matches
-                            </button>
-                            <button id="cancelMatchesBtn" class="ml-2 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-full shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-transform transform hover:scale-105">
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Navigation for Rounds -->
-            <div id="addNewRoundContainer" class="hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-4">
-                    <nav class="flex overflow-x-auto space-x-2 p-2 rounded-xl bg-gray-50" role="tablist" aria-label="Rounds">
-                        <!-- Tabs will be populated by JavaScript -->
-                    </nav>
-                    <button id="addNewRoundBtn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-lg hover:bg-green-700 transition-colors duration-200 transform hover:scale-105 flex-shrink-0">
-                        Add New Round
-                    </button>
-                </div>
-
-                <!-- Tab Panels Container -->
-                <div id="tabPanelsContainer">
-                    <!-- Tab content will be populated by JavaScript -->
-                </div>
+            <!-- Tab panels -->
+            <div id="tabPanelsContainer" class="space-y-6">
+                <!-- Panels will be populated here -->
             </div>
         </div>
 
-        <!-- Confirmation Modal -->
-        <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white">
-                <div class="mt-3 text-center">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Are you sure?</h3>
-                    <div class="mt-2 px-7 py-3">
-                        <p id="confirmText" class="text-sm text-gray-500"></p>
-                    </div>
-                    <div class="items-center px-4 py-3">
-                        <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                            Delete
-                        </button>
-                        <button id="cancelDeleteBtn" class="ml-2 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-full shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">
-                            Cancel
-                        </button>
-                    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+            <!-- Leaderboard Card -->
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center">Leaderboard</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GP</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Leaderboard data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-        
-        <!-- Leaderboard Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">League Leaderboard</h2>
-            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Games Played</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win %</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Point Differential</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardBody" class="bg-white divide-y divide-gray-200">
-                        <!-- Leaderboard data will be populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
-            <h2 class="text-2xl font-bold mb-4 text-gray-700">Performance Analytics</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="chart-container rounded-xl overflow-hidden shadow">
+            <!-- Charts -->
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center">Win/Loss Record</h2>
+                <div class="chart-container flex-grow">
                     <canvas id="winLossChart"></canvas>
                 </div>
-                <div class="chart-container rounded-xl overflow-hidden shadow">
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center">Total Games Played</h2>
+                <div class="chart-container flex-grow">
                     <canvas id="gamesPlayedChart"></canvas>
                 </div>
-                <div class="chart-container rounded-xl overflow-hidden shadow">
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col">
+                <h2 class="text-xl font-bold mb-4 text-center">Point Differential</h2>
+                <div class="chart-container flex-grow">
                     <canvas id="pointDifferentialChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for player count -->
+    <div id="playerCountModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+            <div class="text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Enter Number of Players</h3>
+                <div class="mt-2 px-7 py-3">
+                    <input type="number" id="playerCountInput" min="2" placeholder="e.g., 4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="generateMatchesBtn" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Generate Matches
+                    </button>
+                    <button id="cancelMatchesBtn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Deletion -->
+    <div id="confirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+            <div class="text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Confirm Deletion</h3>
+                <p id="confirmText" class="text-sm text-gray-500 mb-4"></p>
+                <div class="flex justify-center gap-4">
+                    <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-1/2 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                    <button id="cancelDeleteBtn" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-1/2 shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
