@@ -88,6 +88,13 @@
         };
 
         const initializeFirebase = () => {
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase API Key is missing. Check your Firebase configuration.");
+                document.getElementById('userIdDisplay').innerText = `Error: Firebase API Key missing.`;
+                hideLoadingSpinner();
+                return;
+            }
+
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getDatabase(app);
