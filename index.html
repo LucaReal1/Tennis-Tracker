@@ -12,14 +12,23 @@
     <script type="module">
         // Firebase and Firestore imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // Global variables for Firebase configuration, provided by the environment.
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwEb6uimdpzWYGKD66WiQpt-FDT7nwHts",
+            authDomain: "tennis-tracker-7eff9.firebaseapp.com",
+            projectId: "tennis-tracker-7eff9",
+            storageBucket: "tennis-tracker-7eff9.firebasestorage.app",
+            messagingSenderId: "677749560869",
+            appId: "1:677749560869:web:c39cea9900805fd97851cc",
+            measurementId: "G-VSBCC91SW8"
+        };
+        
+        // This is a placeholder. You'll need to set up Firestore Security Rules to allow access.
+        const appId = "default-app-id"; 
 
         let db, auth, userId;
         let unsubscribeMatchData;
@@ -46,11 +55,8 @@
             showLoadingSpinner(); // Show spinner on initial load
 
             try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                // We've removed the custom token logic and are using anonymous sign-in.
+                await signInAnonymously(auth);
                 userId = auth.currentUser.uid;
                 document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
             } catch (error) {
@@ -227,12 +233,12 @@
                 if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
 
                 if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
-                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
+                else if (scoreB > scoreA) { players[B].wins++; players[A].losses++; }
 
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
-                players[B].pointsScored += scoreB;
-                players[B].pointsAgainst += scoreA;
+                players[playerB].pointsScored += scoreB;
+                players[playerB].pointsAgainst += scoreA;
             });
 
             const playerData = Object.keys(players).map(name => {
