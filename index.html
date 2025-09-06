@@ -90,6 +90,12 @@
                 return;
             }
 
+            // Add event listener for the create new round button
+            const createRoundBtn = document.getElementById('createRoundBtn');
+            if (createRoundBtn) {
+                createRoundBtn.addEventListener('click', createNewRound);
+            }
+
             // Set up a listener for the rounds data from Firestore
             const roundsCollectionRef = collection(db, collectionPath);
             onSnapshot(roundsCollectionRef, (querySnapshot) => {
