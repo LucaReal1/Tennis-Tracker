@@ -72,7 +72,8 @@
                 if (rounds.length > 0) {
                     showTab(`tab-${rounds[0].id}`);
                 }
-                // NOTE: The loading spinner will now be hidden inside updateInfographic
+                // Hide the spinner after this check, regardless of whether rounds were found.
+                hideLoadingSpinner();
             }, (error) => {
                 console.error("Error fetching rounds:", error);
                 hideLoadingSpinner();
@@ -230,8 +231,8 @@
 
                 players[playerA].pointsScored += scoreA;
                 players[playerA].pointsAgainst += scoreB;
-                players[playerB].pointsScored += scoreB;
-                players[playerB].pointsAgainst += scoreA;
+                players[B].pointsScored += scoreB;
+                players[B].pointsAgainst += scoreA;
             });
 
             const playerData = Object.keys(players).map(name => {
