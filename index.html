@@ -9,6 +9,294 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script type="module">
+        // Firebase and Firestore imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Global variables for Firebase configuration, provided by the environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+        let unsubscribeMatchData;
+
+        // Set Firebase log level for debugging
+        setLogLevel('debug');
+
+        const initializeFirebase = async () => {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser.uid;
+                document.getElementById('userIdDisplay').innerText = `User ID: ${userId}`;
+            } catch (error) {
+                console.error("Firebase Auth error:", error);
+                document.getElementById('userIdDisplay').innerText = `Auth Error: ${error.message}`;
+                return;
+            }
+
+            // Set up a listener for the rounds data from Firestore
+            const roundsCollectionRef = collection(db, `artifacts/${appId}/public/data/rounds`);
+            onSnapshot(roundsCollectionRef, (querySnapshot) => {
+                const rounds = [];
+                querySnapshot.forEach((doc) => {
+                    rounds.push({ id: doc.id, name: doc.data().name });
+                });
+                populateTabs(rounds);
+                // Select the first tab by default
+                if (rounds.length > 0) {
+                    showTab(`tab-${rounds[0].id}`);
+                }
+            }, (error) => {
+                console.error("Error fetching rounds:", error);
+            });
+        };
+
+        const populateTabs = (rounds) => {
+            const tabList = document.querySelector('[role="tablist"]');
+            const tabPanels = document.getElementById('tabPanelsContainer');
+            tabList.innerHTML = '';
+            tabPanels.innerHTML = '';
+
+            rounds.sort((a, b) => parseInt(a.name.replace('Round ', '')) - parseInt(b.name.replace('Round ', ''))).forEach((round, index) => {
+                const tabButton = document.createElement('button');
+                tabButton.setAttribute('role', 'tab');
+                tabButton.setAttribute('id', `tab-${round.id}`);
+                tabButton.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+                tabButton.setAttribute('aria-controls', `panel-${round.id}`);
+                tabButton.className = 'text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
+                tabButton.innerText = round.name;
+                tabButton.addEventListener('click', () => showTab(tabButton.id));
+                tabList.appendChild(tabButton);
+
+                const panelDiv = document.createElement('div');
+                panelDiv.setAttribute('id', `panel-${round.id}`);
+                panelDiv.setAttribute('role', 'tabpanel');
+                panelDiv.setAttribute('tabindex', '0');
+                panelDiv.className = `overflow-x-auto rounded-lg border border-gray-200 ${index !== 0 ? 'hidden' : ''}`;
+                panelDiv.innerHTML = `
+                    <table id="matchDataTable-${round.id}" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Match data will be populated here by JavaScript -->
+                        </tbody>
+                    </table>
+                `;
+                tabPanels.appendChild(panelDiv);
+            });
+        };
+
+        const showTab = (tabId) => {
+            const currentActiveTab = document.querySelector('[role="tab"][aria-selected="true"]');
+            if (currentActiveTab) {
+                const currentPanelId = currentActiveTab.getAttribute('aria-controls');
+                const currentPanel = document.getElementById(currentPanelId);
+                currentActiveTab.setAttribute('aria-selected', 'false');
+                currentPanel.classList.add('hidden');
+            }
+
+            const newActiveTab = document.getElementById(tabId);
+            if (!newActiveTab) return;
+            const newPanelId = newActiveTab.getAttribute('aria-controls');
+            const newPanel = document.getElementById(newPanelId);
+
+            newActiveTab.setAttribute('aria-selected', 'true');
+            newPanel.classList.remove('hidden');
+
+            const roundId = newActiveTab.id.replace('tab-', '');
+            updateInfographic(roundId);
+        };
+
+        const updateInfographic = (roundId) => {
+            if (unsubscribeMatchData) {
+                unsubscribeMatchData();
+            }
+
+            const roundDocRef = doc(db, `artifacts/${appId}/public/data/rounds/${roundId}`);
+            unsubscribeMatchData = onSnapshot(roundDocRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().matches) {
+                    const matches = docSnap.data().matches;
+                    const tableBody = document.querySelector(`#matchDataTable-${roundId} tbody`);
+                    tableBody.innerHTML = '';
+                    matches.forEach(match => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerA}</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.scoreA}</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${match.scoreB}</td>
+                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${match.playerB}</td>
+                        `;
+                        row.addEventListener('blur', (e) => saveMatchData(roundId), true);
+                        tableBody.appendChild(row);
+                    });
+                    
+                    const data = processMatchData(matches);
+                    populateLeaderboard(data);
+                    renderCharts(data);
+                }
+            }, (error) => {
+                console.error("Error fetching match data:", error);
+            });
+        };
+        
+        const saveMatchData = async (roundId) => {
+            const tableBody = document.querySelector(`#matchDataTable-${roundId} tbody`);
+            const rows = tableBody.querySelectorAll('tr');
+            const matches = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 4) {
+                    matches.push({
+                        playerA: cells[0].innerText.trim(),
+                        scoreA: parseInt(cells[1].innerText, 10),
+                        scoreB: parseInt(cells[2].innerText, 10),
+                        playerB: cells[3].innerText.trim()
+                    });
+                }
+            });
+
+            try {
+                const roundDocRef = doc(db, `artifacts/${appId}/public/data/rounds/${roundId}`);
+                await setDoc(roundDocRef, { matches }, { merge: true });
+                console.log("Match data saved to Firestore!");
+            } catch (e) {
+                console.error("Error writing document: ", e);
+            }
+        };
+
+        // --- Chart & Leaderboard Logic (Unchanged) ---
+        let winLossChart, gamesPlayedChart, pointDifferentialChart;
+
+        const renderCharts = (data) => {
+            if (winLossChart) winLossChart.destroy();
+            if (gamesPlayedChart) gamesPlayedChart.destroy();
+            if (pointDifferentialChart) pointDifferentialChart.destroy();
+            
+            createWinLossChart(data);
+            createGamesPlayedChart(data);
+            createPointDifferentialChart(data);
+        };
+
+        const processMatchData = (matches) => {
+            const players = {};
+            matches.forEach(match => {
+                const { playerA, scoreA, scoreB, playerB } = match;
+
+                if (!players[playerA]) players[playerA] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+                if (!players[playerB]) players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
+
+                if (scoreA > scoreB) { players[playerA].wins++; players[playerB].losses++; }
+                else if (scoreB > scoreA) { players[playerB].wins++; players[playerA].losses++; }
+
+                players[playerA].pointsScored += scoreA;
+                players[playerA].pointsAgainst += scoreB;
+                players[playerB].pointsScored += scoreB;
+                players[playerB].pointsAgainst += scoreA;
+            });
+
+            const playerData = Object.keys(players).map(name => {
+                const player = players[name];
+                const gamesPlayed = player.wins + player.losses;
+                const winPercentage = gamesPlayed > 0 ? (player.wins / gamesPlayed) * 100 : 0;
+                const pointDifferential = player.pointsScored - player.pointsAgainst;
+                return { name, wins: player.wins, losses: player.losses, gamesPlayed, winPercentage, pointDifferential };
+            });
+
+            return playerData.sort((a, b) => {
+                if (a.wins !== b.wins) return b.wins - a.wins;
+                return b.pointDifferential - a.pointDifferential;
+            });
+        };
+
+        const populateLeaderboard = (data) => {
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = '';
+            data.forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${player.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.wins}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.losses}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.gamesPlayed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.winPercentage.toFixed(1)}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.pointDifferential}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        };
+
+        const createWinLossChart = (data) => {
+            const ctx = document.getElementById('winLossChart').getContext('2d');
+            winLossChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [
+                        { label: 'Wins', data: data.map(p => p.wins), backgroundColor: 'rgba(59, 130, 246, 0.8)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 },
+                        { label: 'Losses', data: data.map(p => p.losses), backgroundColor: 'rgba(239, 68, 68, 0.8)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, title: { display: true, text: 'Games' } } } }
+            });
+        };
+
+        const createGamesPlayedChart = (data) => {
+            const ctx = document.getElementById('gamesPlayedChart').getContext('2d');
+            gamesPlayedChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [{
+                        data: data.map(p => p.gamesPlayed),
+                        backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(34, 197, 94, 0.8)', 'rgba(99, 102, 241, 0.8)', 'rgba(163, 230, 53, 0.8)'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, title: { display: false } } }
+            });
+        };
+
+        const createPointDifferentialChart = (data) => {
+            const ctx = document.getElementById('pointDifferentialChart').getContext('2d');
+            pointDifferentialChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(p => p.name),
+                    datasets: [{
+                        label: 'Point Differential',
+                        data: data.map(p => p.pointDifferential),
+                        backgroundColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                        borderColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, title: { display: true, text: 'Point Differential' } } } }
+            });
+        };
+        
+        window.addEventListener("DOMContentLoaded", initializeFirebase);
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -28,126 +316,47 @@
             border-color: #3b82f6; /* blue-500 */
             color: #1f2937; /* gray-800 */
         }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
     <div class="container mx-auto p-4 sm:p-6 md:p-8">
-        <header class="text-center mb-12">
+        <header class="text-center mb-6">
             <h1 class="text-4xl md:text-5xl font-black text-blue-600 tracking-tight">FRIENDS TENNIS LEAGUE</h1>
             <p class="text-lg text-gray-600 mt-2">The Official Leaderboard & Performance Analytics</p>
+            <p id="userIdDisplay" class="text-sm font-semibold mt-2 text-gray-500 break-all"></p>
         </header>
 
         <!-- Data Table Section -->
         <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-8">
             <h2 class="text-2xl font-bold mb-4 text-gray-700">Edit Match Data Below</h2>
-            <p class="text-gray-600 mb-6">Click on a tab to select a round. Change the values in the table, then the leaderboard and charts below will update automatically!</p>
+            <p class="text-gray-600 mb-6">Click on a tab to select a round. The leaderboard and charts below will update in real-time for everyone!</p>
+
+            <div class="text-center py-4" id="loadingIndicator">
+                <div class="loading-spinner mx-auto"></div>
+                <p class="mt-2 text-gray-500">Loading data...</p>
+            </div>
 
             <!-- Tab Buttons -->
             <div role="tablist" class="flex flex-col sm:flex-row gap-2 border-b-2 border-gray-200 mb-6">
-                <button role="tab" id="tab-round1" aria-selected="true" aria-controls="panel-round1" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 1</button>
-                <button role="tab" id="tab-round2" aria-selected="false" aria-controls="panel-round2" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 2</button>
-                <button role="tab" id="tab-round3" aria-selected="false" aria-controls="panel-round3" class="text-lg font-semibold text-gray-500 px-4 py-2 hover:bg-gray-100 rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Round 3</button>
+                <!-- Tab buttons populated by JavaScript -->
             </div>
 
             <!-- Tab Panels (Tables) -->
-            <div id="panel-round1" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200">
-                <table id="matchDataTable-round1" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="panel-round2" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200 hidden">
-                <table id="matchDataTable-round2" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="panel-round3" role="tabpanel" tabindex="0" class="overflow-x-auto rounded-lg border border-gray-200 hidden">
-                <table id="matchDataTable-round3" class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score A</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score B</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player B</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marcello</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca R</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Giacomo</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Marco</td>
-                        </tr>
-                        <tr>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Lorenzo</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
-                            <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Luca C</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div id="tabPanelsContainer">
+                <!-- Tab panels populated by JavaScript -->
             </div>
         </div>
 
@@ -196,248 +405,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        let winLossChart, gamesPlayedChart, pointDifferentialChart;
-
-        // Function to render all charts
-        const renderCharts = (data) => {
-            // Destroy existing chart instances to prevent conflicts
-            if (winLossChart) winLossChart.destroy();
-            if (gamesPlayedChart) gamesPlayedChart.destroy();
-            if (pointDifferentialChart) pointDifferentialChart.destroy();
-            
-            // Create new charts
-            createWinLossChart(data);
-            createGamesPlayedChart(data);
-            createPointDifferentialChart(data);
-        };
-
-        const updateInfographic = (tableId) => {
-            const table = document.getElementById(tableId);
-            const data = processMatchData(table);
-            populateLeaderboard(data);
-            renderCharts(data);
-        };
-
-        // Function to process match data from the table and compute player stats
-        const processMatchData = (table) => {
-            const rows = table.querySelectorAll('tbody tr');
-            const players = {};
-
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length === 4) {
-                    const playerA = cells[0].innerText.trim();
-                    const scoreA = parseInt(cells[1].innerText, 10);
-                    const scoreB = parseInt(cells[2].innerText, 10);
-                    const playerB = cells[3].innerText.trim();
-
-                    // Initialize players if they don't exist
-                    if (!players[playerA]) {
-                        players[playerA] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
-                    }
-                    if (!players[playerB]) {
-                        players[playerB] = { wins: 0, losses: 0, pointsScored: 0, pointsAgainst: 0 };
-                    }
-
-                    // Update stats
-                    if (scoreA > scoreB) {
-                        players[playerA].wins++;
-                        players[playerB].losses++;
-                    } else if (scoreB > scoreA) {
-                        players[playerB].wins++;
-                        players[playerA].losses++;
-                    }
-
-                    players[playerA].pointsScored += scoreA;
-                    players[playerA].pointsAgainst += scoreB;
-                    players[playerB].pointsScored += scoreB;
-                    players[playerB].pointsAgainst += scoreA;
-                }
-            });
-
-            // Convert the players object into an array for sorting and processing
-            const playerData = Object.keys(players).map(name => {
-                const player = players[name];
-                const gamesPlayed = player.wins + player.losses;
-                const winPercentage = gamesPlayed > 0 ? (player.wins / gamesPlayed) * 100 : 0;
-                const pointDifferential = player.pointsScored - player.pointsAgainst;
-                return {
-                    name,
-                    wins: player.wins,
-                    losses: player.losses,
-                    gamesPlayed,
-                    winPercentage,
-                    pointDifferential
-                };
-            });
-
-            return playerData.sort((a, b) => {
-                if (a.wins !== b.wins) {
-                    return b.wins - a.wins;
-                }
-                return b.pointDifferential - a.pointDifferential;
-            });
-        };
-
-        const populateLeaderboard = (data) => {
-            const leaderboardBody = document.getElementById('leaderboardBody');
-            leaderboardBody.innerHTML = ''; // Clear previous data
-            
-            data.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${index + 1}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${player.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.wins}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.losses}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.gamesPlayed}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.winPercentage.toFixed(1)}%</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${player.pointDifferential}</td>
-                `;
-                leaderboardBody.appendChild(row);
-            });
-        };
-
-        const createWinLossChart = (data) => {
-            const ctx = document.getElementById('winLossChart').getContext('2d');
-            winLossChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(p => p.name),
-                    datasets: [
-                        {
-                            label: 'Wins',
-                            data: data.map(p => p.wins),
-                            backgroundColor: 'rgba(59, 130, 246, 0.8)', // Tailwind blue-500
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Losses',
-                            data: data.map(p => p.losses),
-                            backgroundColor: 'rgba(239, 68, 68, 0.8)', // Tailwind red-500
-                            borderColor: 'rgba(239, 68, 68, 1)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Games' }
-                        }
-                    }
-                }
-            });
-        };
-
-        const createGamesPlayedChart = (data) => {
-            const ctx = document.getElementById('gamesPlayedChart').getContext('2d');
-            gamesPlayedChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.map(p => p.name),
-                    datasets: [{
-                        data: data.map(p => p.gamesPlayed),
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.8)',
-                            'rgba(239, 68, 68, 0.8)',
-                            'rgba(245, 158, 11, 0.8)',
-                            'rgba(34, 197, 94, 0.8)',
-                            'rgba(99, 102, 241, 0.8)',
-                            'rgba(163, 230, 53, 0.8)'
-                        ],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: false,
-                        }
-                    }
-                }
-            });
-        };
-
-        const createPointDifferentialChart = (data) => {
-            const ctx = document.getElementById('pointDifferentialChart').getContext('2d');
-            pointDifferentialChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(p => p.name),
-                    datasets: [{
-                        label: 'Point Differential',
-                        data: data.map(p => p.pointDifferential),
-                        backgroundColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'), // Green for positive, red for negative
-                        borderColor: data.map(p => p.pointDifferential >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Point Differential'
-                            }
-                        }
-                    }
-                }
-            });
-        };
-        
-        // Tab switching logic
-        const tabList = document.querySelector('[role="tablist"]');
-        const tabs = tabList.querySelectorAll('[role="tab"]');
-        
-        const showTab = (tabId) => {
-            const currentActiveTab = tabList.querySelector('[aria-selected="true"]');
-            const currentPanelId = currentActiveTab.getAttribute('aria-controls');
-            const currentPanel = document.getElementById(currentPanelId);
-
-            currentActiveTab.setAttribute('aria-selected', 'false');
-            currentPanel.classList.add('hidden');
-
-            const newActiveTab = document.getElementById(tabId);
-            const newPanelId = newActiveTab.getAttribute('aria-controls');
-            const newPanel = document.getElementById(newPanelId);
-
-            newActiveTab.setAttribute('aria-selected', 'true');
-            newPanel.classList.remove('hidden');
-
-            // Update infographic for the new tab's data
-            updateInfographic(newPanel.querySelector('table').id);
-        };
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                showTab(tab.id);
-            });
-        });
-
-        // Initial render on page load
-        document.addEventListener("DOMContentLoaded", () => {
-            // Get the ID of the initially selected tab's panel and update the infographic
-            const initialTab = document.querySelector('[role="tab"][aria-selected="true"]');
-            const initialPanelId = initialTab.getAttribute('aria-controls');
-            const initialPanel = document.getElementById(initialPanelId);
-            updateInfographic(initialPanel.querySelector('table').id);
-        });
-    </script>
 </body>
 </html>
