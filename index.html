@@ -191,7 +191,14 @@
                 </div>
                  <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
                     <h3 class="text-xl font-bold text-white mb-4">Player Spotlight</h3>
-                     <select id="spotlightPlayerSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full mb-4"></select>
+                     <div class="flex gap-4 mb-4">
+                        <select id="spotlightPlayerSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full"></select>
+                        <select id="spotlightStatSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full">
+                            <option value="elo">ELO Rating</option>
+                            <option value="gameWinPercentage">Game Win %</option>
+                            <option value="gameDifferential">Game Differential</option>
+                        </select>
+                     </div>
                      <div class="h-64"><canvas id="playerSpotlightChart"></canvas></div>
                 </div>
                 
@@ -789,7 +796,7 @@
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
                 const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-                stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.gameWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
                 stats.matchWinPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100) : 0;
             }
 
@@ -823,7 +830,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.pointWinPercentage.toFixed(1)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gameWinPercentage.toFixed(1)}%</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
@@ -831,7 +838,8 @@
             }
              const roundWinnerContainer = document.getElementById(`roundWinnerEmblem-${round.id.replace(/[^a-zA-Z0-9]/g, '-')}`);
             if (roundWinnerContainer && sortedPlayers.length > 0) {
-                roundWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Round Winner: ${sortedPlayers[0].name}</p>`;
+                const roundWinner = [...sortedPlayers].sort((a, b) => b.gameWinPercentage - a.gameWinPercentage)[0];
+                roundWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Round Winner: ${roundWinner.name}</p>`;
             } else if (roundWinnerContainer) {
                 roundWinnerContainer.innerHTML = '';
             }
@@ -915,8 +923,8 @@
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="matchWinPercentage">Match Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointWinPercentage">Point Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gameWinPercentage">Game Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gameDifferential">Game Diff <span class="sort-icon">▲</span></th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-body-${sanitizedId}" class="divide-y divide-slate-800">
@@ -974,7 +982,7 @@
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
                         name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
-                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0,
+                        totalPoints: 0, gameDifferential: 0, totalPointsAgainst: 0,
                         matchHistory: [], elo: playerEloRatings[playerName] || 1500
                     };
                 }
@@ -1001,8 +1009,8 @@
                         statsB.totalPoints += match.scoreB;
                         statsA.totalPointsAgainst += match.scoreB;
                         statsB.totalPointsAgainst += match.scoreA;
-                        statsA.pointDifferential += match.scoreA - match.scoreB;
-                        statsB.pointDifferential += match.scoreB - match.scoreA;
+                        statsA.gameDifferential += match.scoreA - match.scoreB;
+                        statsB.gameDifferential += match.scoreB - match.scoreA;
                         
                         if (match.scoreA > match.scoreB) {
                             statsA.wins++;
@@ -1023,12 +1031,13 @@
                     if (playerRoundStats.gamesPlayed > 0) {
                         const existingHistoryIndex = playerPerformanceHistory[playerName].findIndex(h => h.round === round.id);
                         if (existingHistoryIndex > -1) {
-                            playerPerformanceHistory[playerName][existingHistoryIndex].pointDifferential = playerStats[playerName].pointDifferential;
+                            playerPerformanceHistory[playerName][existingHistoryIndex].gameDifferential = playerStats[playerName].gameDifferential;
                         } else {
                             playerPerformanceHistory[playerName].push({
                                 round: round.id,
                                 elo: playerEloRatings[playerName] || 1500,
-                                pointDifferential: playerStats[playerName].pointDifferential
+                                gameDifferential: playerStats[playerName].gameDifferential,
+                                gameWinPercentage: playerRoundStats.gameWinPercentage
                             });
                         }
                         // Sort history by round
@@ -1042,8 +1051,9 @@
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
                 const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-                stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.gameWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
                 stats.matchWinPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100) : 0;
+                stats.totalGameDiff = stats.gameDifferential;
                 
                 let currentStreak = 0;
                 stats.matchHistory.forEach(result => {
@@ -1094,7 +1104,7 @@
             leaderboardBody.innerHTML = '';
 
             if (sortedPlayers.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No player data available.</td></tr>`;
+                leaderboardBody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No player data available.</td></tr>`;
             } else {
                 sortedPlayers.forEach((stats, index) => {
                     const formHtml = stats.matchHistory.slice(-5).map(r => `<span class="form-guide-dot ${r === 'W' ? 'bg-green-500' : 'bg-red-500'}"></span>`).join('');
@@ -1107,7 +1117,8 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.pointWinPercentage.toFixed(1)}%</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gameWinPercentage.toFixed(1)}%</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold ${stats.gameDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.gameDifferential > 0 ? '+' : ''}${stats.gameDifferential}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm"><div class="flex gap-1">${formHtml}</div></td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
@@ -1116,7 +1127,8 @@
 
             const leagueWinnerContainer = document.getElementById('leagueWinnerEmblem');
             if (leagueWinnerContainer && sortedPlayers.length > 0) {
-                 leagueWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Current League Leader: ${sortedPlayers[0].name}</p>`;
+                 const leagueWinner = [...sortedPlayers].sort((a,b) => b.gameWinPercentage - a.gameWinPercentage)[0];
+                 leagueWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Current League Leader: ${leagueWinner.name}</p>`;
             } else if (leagueWinnerContainer) {
                  leagueWinnerContainer.innerHTML = '';
             }
@@ -1162,7 +1174,7 @@
                     }
                     
                     if (firstRoundStats && lastRoundStats && firstRoundStats !== lastRoundStats) {
-                        const improvement = lastRoundStats.pointWinPercentage - firstRoundStats.pointWinPercentage;
+                        const improvement = lastRoundStats.gameWinPercentage - firstRoundStats.gameWinPercentage;
                         if (improvement > mostImproved.improvement) {
                             mostImproved = { player: playerName, improvement };
                         }
@@ -1186,7 +1198,7 @@
         };
         
         function getPlayerStatsForRound(round, playerName) {
-            const stats = { gamesPlayed: 0, totalPoints: 0, totalPointsAgainst: 0, pointWinPercentage: 0 };
+            const stats = { gamesPlayed: 0, totalPoints: 0, totalPointsAgainst: 0, gameWinPercentage: 0 };
             (round.matches || []).forEach(match => {
                 if (match.playerA === playerName || match.playerB === playerName) {
                     if (match.scoreA > 0 || match.scoreB > 0) {
@@ -1202,7 +1214,7 @@
                 }
             });
             const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-            stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+            stats.gameWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
             return stats;
         }
 
@@ -1280,6 +1292,7 @@
 
         function updateSpotlightChart(history) {
             const player = document.getElementById('spotlightPlayerSelect').value;
+            const stat = document.getElementById('spotlightStatSelect').value;
             if (!player || !history[player]) {
                 if (chartInstances.playerSpotlightChart) chartInstances.playerSpotlightChart.destroy();
                 return;
@@ -1287,16 +1300,18 @@
             
             const playerData = history[player];
             const labels = playerData.map(d => d.round);
-            const eloData = playerData.map(d => Math.round(d.elo));
+            const data = playerData.map(d => {
+                if (stat === 'elo') return Math.round(d.elo);
+                return d[stat];
+            });
 
-            createOrUpdateChart('playerSpotlightChart', 'line', labels, [{
-                label: 'ELO Rating',
-                data: eloData,
-                borderColor: '#38bdf8',
-                backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                fill: true,
-                tension: 0.3
-            }]);
+            const datasets = {
+                'elo': { label: 'ELO Rating', data: data, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.2)' },
+                'gameWinPercentage': { label: 'Game Win %', data: data, borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.2)' },
+                'gameDifferential': { label: 'Game Differential', data: data, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.2)' }
+            }
+
+            createOrUpdateChart('playerSpotlightChart', 'line', labels, [{ ...datasets[stat], fill: true, tension: 0.3 }]);
         }
 
 
@@ -1348,7 +1363,8 @@
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payload),
+                    referrerPolicy: "no-referrer"
                 });
                 if (!response.ok) {
                     throw new Error(`API call failed with status: ${response.status}`);
@@ -1416,6 +1432,7 @@
             document.getElementById('player1Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
             document.getElementById('player2Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
             document.getElementById('spotlightPlayerSelect').addEventListener('change', () => updateSpotlightChart(playerPerformanceHistory));
+            document.getElementById('spotlightStatSelect').addEventListener('change', () => updateSpotlightChart(playerPerformanceHistory));
             document.getElementById('closeGeminiModalBtn').addEventListener('click', hideGeminiModal);
             document.getElementById('generateLeagueSummaryBtn').addEventListener('click', generateLeagueSummary);
         });
