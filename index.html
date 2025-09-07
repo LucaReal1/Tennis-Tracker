@@ -145,7 +145,8 @@
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="matchWinPercentage">Match Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointWinPercentage">Point Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gameWinPercentage">Game Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="totalGameDiff">Total Game Diff <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Form</th>
                                 </tr>
                             </thead>
@@ -192,28 +193,6 @@
                     <h3 class="text-xl font-bold text-white mb-4">Player Spotlight</h3>
                      <select id="spotlightPlayerSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full mb-4"></select>
                      <div class="h-64"><canvas id="playerSpotlightChart"></canvas></div>
-                </div>
-
-                <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
-                    <h3 class="text-xl font-bold text-white mb-6">Performance Charts</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Win/Loss Record</h4>
-                            <div class="h-64"><canvas id="winLossChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Games Played</h4>
-                            <div class="h-64"><canvas id="gamesPlayedChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Point Differential</h4>
-                            <div class="h-64"><canvas id="pointDifferentialChart"></canvas></div>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Average Score</h4>
-                            <div class="h-64"><canvas id="averageScoreChart"></canvas></div>
-                        </div>
-                    </div>
                 </div>
                 
             </div>
@@ -264,7 +243,7 @@
         // Firebase and Realtime Database imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getDatabase, ref, onValue, set, get, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
         
         // Your Firebase configuration
         const firebaseConfig = {
@@ -399,7 +378,7 @@
                 recalculatedElos[player] = 1500;
             });
 
-            const sortedRounds = [...roundsArray].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+            const sortedRounds = [...roundsArray].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
             sortedRounds.forEach(round => {
                 (round.matches || []).forEach(match => {
@@ -487,7 +466,7 @@
                 const nextRoundNumber = Object.keys(existingRounds).length + 1;
                 const newRoundName = `Round ${nextRoundNumber}`;
                 
-                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: newMatches });
+                await set(ref(db, `${databasePath}/${newRoundName}`), { matches: newMatches, createdAt: serverTimestamp() });
                 console.log(`'${newRoundName}' created with generated matches!`);
                 showMessage(`New round created with all ${newMatches.length} matches!`, "success");
 
@@ -1157,7 +1136,7 @@
             }
             if (closestMatch) {
                 const winner = closestMatch.scoreA > closestMatch.scoreB ? closestMatch.playerA : closestMatch.playerB;
-                renderStatCard('closestMatchContainer', 'Closest Match', `${closestMatch.scoreA} - ${closestMatch.scoreB}`, `${winner} won`);
+                renderStatCard('closestMatchContainer', 'Closest Match', `${closestMatch.scoreA} - ${closestMatch.scoreB}`, `by ${winner} vs ${winner === closestMatch.playerA ? closestMatch.playerB : closestMatch.playerA}`);
             } else {
                 renderStatCard('closestMatchContainer');
             }
