@@ -760,7 +760,7 @@
                 if (!playerStats[playerName]) {
                     playerStats[playerName] = {
                         name: playerName, wins: 0, losses: 0, gamesPlayed: 0,
-                        totalPoints: 0, pointDifferential: 0, totalPointsAgainst: 0,
+                        totalPoints: 0, gameDifferential: 0, totalPointsAgainst: 0,
                         elo: playerEloRatings[playerName] || 1500
                     };
                 }
@@ -780,8 +780,8 @@
                     statsB.totalPoints += match.scoreB;
                     statsA.totalPointsAgainst += match.scoreB;
                     statsB.totalPointsAgainst += match.scoreA;
-                    statsA.pointDifferential += match.scoreA - match.scoreB;
-                    statsB.pointDifferential += match.scoreB - match.scoreA;
+                    statsA.gameDifferential += match.scoreA - match.scoreB;
+                    statsB.gameDifferential += match.scoreB - match.scoreA;
                     
                     if (match.scoreA > match.scoreB) {
                         statsA.wins++;
@@ -831,7 +831,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gameWinPercentage.toFixed(1)}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.gameDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.gameDifferential > 0 ? '+' : ''}${stats.gameDifferential}</td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
                 });
@@ -1118,7 +1118,7 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gameWinPercentage.toFixed(1)}%</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold ${stats.gameDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.gameDifferential > 0 ? '+' : ''}${stats.gameDifferential}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold ${stats.totalGameDiff >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.totalGameDiff > 0 ? '+' : ''}${stats.totalGameDiff}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm"><div class="flex gap-1">${formHtml}</div></td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
