@@ -707,7 +707,7 @@
                                 // Find the currently active tab to preserve it, otherwise default to the first.
                                 let activeTab = document.querySelector('.tab-button.active');
                                 if (!activeTab || !document.getElementById(activeTab.id)) {
-                                    const firstTabId = `tab-${allRoundsData.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric: true}))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                                    const firstTabId = `tab-${allRoundsData.sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0))[0].id.replace(/[^a-zA-Z0-9]/g, '-')}`;
                                     showTab(firstTabId);
                                 }
                                 updateLeagueStats(allRoundsData);
@@ -864,7 +864,7 @@
             tabList.innerHTML = '';
             tabPanels.innerHTML = '';
 
-            rounds.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true})).forEach((round) => {
+            rounds.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach((round) => {
                 const sanitizedId = round.id.replace(/[^a-zA-Z0-9]/g, '-');
                 const tabButtonContainer = document.createElement('div');
                 tabButtonContainer.className = 'flex items-center w-full group';
@@ -1002,7 +1002,7 @@
                 return playerStats[playerName];
             };
 
-            const sortedRounds = [...rounds].sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true}));
+            const sortedRounds = [...rounds].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
             sortedRounds.forEach(round => {
                 (round.matches || []).forEach(match => {
@@ -1053,7 +1053,7 @@
                             });
                         }
                         // Sort history by round
-                        playerPerformanceHistory[playerName].sort((a,b) => a.round.localeCompare(b.round, undefined, {numeric: true}));
+                        playerPerformanceHistory[playerName].sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
                     }
                 });
             });
