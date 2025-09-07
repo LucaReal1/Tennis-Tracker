@@ -193,6 +193,28 @@
                      <select id="spotlightPlayerSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 w-full mb-4"></select>
                      <div class="h-64"><canvas id="playerSpotlightChart"></canvas></div>
                 </div>
+
+                <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <h3 class="text-xl font-bold text-white mb-6">Performance Charts</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Win/Loss Record</h4>
+                            <div class="h-64"><canvas id="winLossChart"></canvas></div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Games Played</h4>
+                            <div class="h-64"><canvas id="gamesPlayedChart"></canvas></div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Point Differential</h4>
+                            <div class="h-64"><canvas id="pointDifferentialChart"></canvas></div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-medium text-slate-300 text-center mb-3">Average Score</h4>
+                            <div class="h-64"><canvas id="averageScoreChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
                 
             </div>
         </div>
@@ -269,6 +291,9 @@
         let roundSortStates = {};
         let playerEloRatings = {};
         let playerPerformanceHistory = {};
+        let playerStats = {};
+        let longestStreak = {};
+        let mostImproved = {};
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -962,7 +987,7 @@
         }
 
         const updateLeagueStats = (rounds) => {
-            const playerStats = {};
+            playerStats = {};
             let allMatches = [];
             playerPerformanceHistory = {};
 
@@ -1034,7 +1059,7 @@
             });
 
             // --- Calculate Derived Stats & Streaks ---
-            let longestStreak = { player: null, streak: 0 };
+            longestStreak = { player: null, streak: 0 };
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
                 const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
@@ -1138,7 +1163,7 @@
             }
             
             // --- Most Improved Player ---
-            let mostImproved = { player: null, improvement: -Infinity };
+            mostImproved = { player: null, improvement: -Infinity };
             if (sortedRounds.length > 1) {
                 const allPlayers = Object.keys(playerStats);
                 allPlayers.forEach(playerName => {
