@@ -120,6 +120,18 @@
             
             <div class="mt-12 space-y-8">
                 <h2 class="text-3xl font-bold text-white mb-6 tracking-tight">League Statistics</h2>
+
+                 <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-white">✨ AI League Summary</h3>
+                        <button id="generateLeagueSummaryBtn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors hover:bg-indigo-500 text-sm">
+                            Generate Summary
+                        </button>
+                    </div>
+                    <div id="leagueSummaryContainer" class="text-slate-400 prose prose-invert prose-sm max-w-none">
+                        Click the button to generate an AI-powered summary of the current league standings.
+                    </div>
+                </div>
                 
                 <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
                     <h3 class="text-xl font-bold text-white mb-4">League Leaderboard</h3>
@@ -132,8 +144,8 @@
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="elo">ELO <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="matchWinPercentage">Match Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointWinPercentage">Point Win % <span class="sort-icon">▲</span></th>
                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Form</th>
                                 </tr>
                             </thead>
@@ -141,6 +153,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="leagueWinnerEmblem" class="text-center pt-4"></div>
                 </div>
 
                  <div class="bg-slate-900/70 rounded-2xl p-6 border border-slate-800">
@@ -213,6 +226,17 @@
             </div>
         </div>
     </div>
+    
+     <div id="geminiModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-8 max-w-2xl w-full shadow-2xl shadow-indigo-500/20 scale-95 transition-transform duration-300 ease-out">
+            <h3 id="geminiModalTitle" class="text-xl font-bold text-white mb-4">✨ AI Generated Content</h3>
+            <div id="geminiModalContent" class="text-slate-300 prose prose-invert prose-sm max-w-none max-h-[60vh] overflow-y-auto"></div>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="closeGeminiModalBtn" class="bg-slate-700 text-white font-semibold py-2 px-5 rounded-lg transition-colors hover:bg-slate-600">Close</button>
+            </div>
+        </div>
+    </div>
+
 
     <script type="module">
         // Firebase and Realtime Database imports
@@ -761,8 +785,8 @@
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
                 const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-                stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
-                stats.avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed) : 0;
+                stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.matchWinPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100) : 0;
             }
 
             let sortedPlayers = Object.values(playerStats);
@@ -794,13 +818,18 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-sky-400 font-bold">${Math.round(stats.elo)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.gamesPlayed}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.avgScore.toFixed(1)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">${stats.pointWinPercentage.toFixed(1)}%</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
                 });
+            }
+             const roundWinnerContainer = document.getElementById(`roundWinnerEmblem-${round.id.replace(/[^a-zA-Z0-9]/g, '-')}`);
+            if (roundWinnerContainer && sortedPlayers.length > 0) {
+                roundWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Round Winner: ${sortedPlayers[0].name}</p>`;
+            } else if (roundWinnerContainer) {
+                roundWinnerContainer.innerHTML = '';
             }
         };
 
@@ -846,7 +875,7 @@
                 matchesContainer.className = 'space-y-4';
                 (round.matches || []).forEach((match, matchIndex) => {
                     const matchRow = document.createElement('div');
-                    matchRow.className = 'grid grid-cols-[1fr_auto_auto_auto_1fr_auto] gap-4 items-center p-3 bg-slate-800/50 rounded-lg';
+                    matchRow.className = 'grid grid-cols-[1fr_auto_auto_auto_1fr_auto_auto] gap-4 items-center p-3 bg-slate-800/50 rounded-lg';
                     const playerAInput = createPlayerInput(round.id, matchIndex, 'playerA', match.playerA);
                     const scoreAInput = createScoreInput(round.id, matchIndex, 'scoreA', match.scoreA);
                     const vsSpan = document.createElement('span');
@@ -855,8 +884,12 @@
                     const scoreBInput = createScoreInput(round.id, matchIndex, 'scoreB', match.scoreB);
                     const playerBInput = createPlayerInput(round.id, matchIndex, 'playerB', match.playerB);
                     const deleteMatchBtn = createDeleteMatchButton(round.id, matchIndex);
+                     const commentaryBtn = document.createElement('button');
+                    commentaryBtn.innerHTML = '✨';
+                    commentaryBtn.className = 'text-2xl';
+                    commentaryBtn.onclick = () => generateMatchCommentary(match);
                     playerAInput.classList.add('text-right');
-                    matchRow.append(playerAInput, scoreAInput, vsSpan, scoreBInput, playerBInput, deleteMatchBtn);
+                    matchRow.append(playerAInput, scoreAInput, vsSpan, scoreBInput, playerBInput, commentaryBtn, deleteMatchBtn);
                     matchesContainer.appendChild(matchRow);
                 });
                 const addMatchBtn = document.createElement('button');
@@ -872,21 +905,21 @@
                         <table class="min-w-full" id="${tableId}">
                            <thead class="border-b border-slate-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
-                                     <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="elo">ELO <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="gamesPlayed">Played <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="winPercentage">Win % <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="avgScore">Avg Score <span class="sort-icon">▲</span></th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="rank">Rank <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="name">Player <span class="sort-icon">▲</span></th>
+                                     <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="elo">ELO <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="wins">Wins <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="losses">Losses <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="matchWinPercentage">Match Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointWinPercentage">Point Win % <span class="sort-icon">▲</span></th>
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider sortable-header" data-sort="pointDifferential">Point Diff <span class="sort-icon">▲</span></th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-body-${sanitizedId}" class="divide-y divide-slate-800">
                             </tbody>
                         </table>
                     </div>
+                     <div id="roundWinnerEmblem-${sanitizedId}" class="text-center pt-4"></div>
                 `;
 
                 panelContent.append(matchesContainer, addMatchBtn, roundLeaderboardContainer);
@@ -1005,8 +1038,8 @@
             for (const playerName in playerStats) {
                 const stats = playerStats[playerName];
                 const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-                stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
-                stats.avgScore = stats.gamesPlayed > 0 ? (stats.totalPoints / stats.gamesPlayed) : 0;
+                stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+                stats.matchWinPercentage = stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed * 100) : 0;
                 
                 let currentStreak = 0;
                 stats.matchHistory.forEach(result => {
@@ -1069,13 +1102,21 @@
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-sky-400 font-bold">${Math.round(stats.elo)}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-green-400 font-bold">${stats.wins}</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm text-red-400 font-bold">${stats.losses}</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.winPercentage.toFixed(1)}%</td>
-                        <td class="px-4 py-4 whitespace-nowrap text-sm font-bold ${stats.pointDifferential >= 0 ? 'text-blue-400' : 'text-orange-400'}">${stats.pointDifferential > 0 ? '+' : ''}${stats.pointDifferential}</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.matchWinPercentage.toFixed(1)}%</td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300">${stats.pointWinPercentage.toFixed(1)}%</td>
                         <td class="px-4 py-4 whitespace-nowrap text-sm"><div class="flex gap-1">${formHtml}</div></td>
                     `;
                     leaderboardBody.innerHTML += `<tr class="hover:bg-slate-800/50">${row}</tr>`;
                 });
             }
+
+            const leagueWinnerContainer = document.getElementById('leagueWinnerEmblem');
+            if (leagueWinnerContainer && sortedPlayers.length > 0) {
+                 leagueWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Current League Leader: ${sortedPlayers[0].name}</p>`;
+            } else if (leagueWinnerContainer) {
+                 leagueWinnerContainer.innerHTML = '';
+            }
+
 
             // --- Render Stat Cards ---
             if (dominantWin) {
@@ -1117,7 +1158,7 @@
                     }
                     
                     if (firstRoundStats && lastRoundStats && firstRoundStats !== lastRoundStats) {
-                        const improvement = lastRoundStats.winPercentage - firstRoundStats.winPercentage;
+                        const improvement = lastRoundStats.pointWinPercentage - firstRoundStats.pointWinPercentage;
                         if (improvement > mostImproved.improvement) {
                             mostImproved = { player: playerName, improvement };
                         }
@@ -1138,65 +1179,26 @@
             updateSpotlightDropdown(allPlayerNames);
             updateSpotlightChart(playerPerformanceHistory);
 
-            // --- Render Performance Charts ---
-            const chartLabels = sortedPlayers.map(p => p.name);
-            const chartData = {
-                wins: sortedPlayers.map(p => p.wins),
-                losses: sortedPlayers.map(p => p.losses),
-                gamesPlayed: sortedPlayers.map(p => p.gamesPlayed),
-                pointDifferential: sortedPlayers.map(p => p.pointDifferential),
-                avgScore: sortedPlayers.map(p => p.avgScore),
-            };
-
-            const chartColors = ['#2563EB', '#16A34A', '#F59E0B', '#DC2626', '#9333EA', '#DB2777', '#4F46E5', '#D946EF'];
-
-            createOrUpdateChart('winLossChart', 'bar', chartLabels, [
-                { label: 'Wins', data: chartData.wins, backgroundColor: '#22c55e' },
-                { label: 'Losses', data: chartData.losses, backgroundColor: '#ef4444' }
-            ], { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } });
-
-            createOrUpdateChart('gamesPlayedChart', 'doughnut', chartLabels, [{
-                label: 'Games Played',
-                data: chartData.gamesPlayed,
-                backgroundColor: chartColors,
-                borderColor: '#1e293b',
-            }], { plugins: { legend: { position: 'top' } } });
-
-            createOrUpdateChart('pointDifferentialChart', 'bar', chartLabels, [{
-                label: 'Point Differential',
-                data: chartData.pointDifferential,
-                backgroundColor: chartData.pointDifferential.map(v => v >= 0 ? '#3b82f6' : '#f97316'),
-            }]);
-            
-            createOrUpdateChart('averageScoreChart', 'line', chartLabels, [{
-                label: 'Average Score',
-                data: chartData.avgScore,
-                backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                borderColor: '#a855f7',
-                tension: 0.3,
-                fill: true,
-            }], { scales: { y: { beginAtZero: true } } });
         };
         
         function getPlayerStatsForRound(round, playerName) {
-            const stats = { gamesPlayed: 0, totalPoints: 0, totalPointsAgainst: 0 };
+            const stats = { gamesPlayed: 0, totalPoints: 0, totalPointsAgainst: 0, pointWinPercentage: 0 };
             (round.matches || []).forEach(match => {
-                if (match.playerA === playerName) {
+                if (match.playerA === playerName || match.playerB === playerName) {
                     if (match.scoreA > 0 || match.scoreB > 0) {
                         stats.gamesPlayed++;
-                        stats.totalPoints += match.scoreA;
-                        stats.totalPointsAgainst += match.scoreB;
-                    }
-                } else if (match.playerB === playerName) {
-                    if (match.scoreA > 0 || match.scoreB > 0) {
-                        stats.gamesPlayed++;
-                        stats.totalPoints += match.scoreB;
-                        stats.totalPointsAgainst += match.scoreA;
+                        if (match.playerA === playerName) {
+                            stats.totalPoints += match.scoreA;
+                            stats.totalPointsAgainst += match.scoreB;
+                        } else {
+                            stats.totalPoints += match.scoreB;
+                            stats.totalPointsAgainst += match.scoreA;
+                        }
                     }
                 }
             });
             const totalPointsInvolved = stats.totalPoints + stats.totalPointsAgainst;
-            stats.winPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
+            stats.pointWinPercentage = totalPointsInvolved > 0 ? (stats.totalPoints / totalPointsInvolved * 100) : 0;
             return stats;
         }
 
@@ -1331,6 +1333,77 @@
                 });
             });
         }
+        
+        // Gemini API Functions
+        const apiKey = ""; // Keep this empty, it's handled by the environment
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        async function callGeminiAPI(prompt) {
+             const payload = { contents: [{ parts: [{ text: prompt }] }] };
+             try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "No response from AI.";
+            } catch (error) {
+                console.error("Gemini API call error:", error);
+                return "Error generating content. Please try again.";
+            }
+        }
+        
+        function showGeminiModal(title, content) {
+            document.getElementById('geminiModalTitle').innerText = title;
+            document.getElementById('geminiModalContent').innerHTML = content.replace(/\n/g, '<br>');
+            const modal = document.getElementById('geminiModal');
+            modal.classList.remove('hidden');
+            modal.querySelector('div').classList.remove('scale-95');
+        }
+
+        function hideGeminiModal() {
+            const modal = document.getElementById('geminiModal');
+             modal.querySelector('div').classList.add('scale-95');
+            modal.classList.add('hidden');
+        }
+        
+        async function generateMatchCommentary(match) {
+            if (match.scoreA === 0 && match.scoreB === 0) {
+                showMessage("Enter a score before generating commentary.", "error");
+                return;
+            }
+            showGeminiModal("✨ Generating Match Commentary...", '<div class="animate-pulse">Fetching expert analysis...</div>');
+            const winner = match.scoreA > match.scoreB ? match.playerA : match.playerB;
+            const prompt = `You are an enthusiastic tennis commentator. Write a brief, exciting, play-by-play summary for a tennis match between ${match.playerA} and ${match.playerB}. The final score was ${match.scoreA} to ${match.scoreB}, with ${winner} winning the match. Keep it under 150 words.`;
+            const commentary = await callGeminiAPI(prompt);
+            showGeminiModal(`✨ Match Commentary: ${match.playerA} vs ${match.playerB}`, commentary);
+        }
+
+        async function generateLeagueSummary() {
+            const container = document.getElementById('leagueSummaryContainer');
+            container.innerHTML = '<div class="animate-pulse">Analyzing league data...</div>';
+            
+            const players = Object.values(playerStats).sort((a,b) => b.elo - a.elo);
+            if(players.length < 2) {
+                 container.innerHTML = "Not enough player data to generate a summary.";
+                 return;
+            }
+            
+            const top3 = players.slice(0,3).map((p,i) => `${i+1}. ${p.name} (ELO: ${Math.round(p.elo)})`).join(', ');
+            const prompt = `You are a sharp sports analyst. Write a brief summary of a tennis league based on these stats: 
+            - The top 3 players are: ${top3}.
+            - The player with the longest winning streak is ${longestStreak.player} with ${longestStreak.streak} wins.
+            - The most improved player recently is ${mostImproved.player}.
+            - Total players: ${players.length}.
+            Keep it under 200 words. Highlight the leader and mention one or two others to watch out for.`;
+            const summary = await callGeminiAPI(prompt);
+            container.innerHTML = summary.replace(/\n/g, '<br>');
+        }
+
 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1338,7 +1411,9 @@
             setupSorting('leagueLeaderboardTable', leagueSortState, updateLeagueStats);
             document.getElementById('player1Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
             document.getElementById('player2Select').addEventListener('change', () => updateRivalryStats(allRoundsData.flatMap(r => r.matches || [])));
-             document.getElementById('spotlightPlayerSelect').addEventListener('change', () => updateSpotlightChart(playerPerformanceHistory));
+            document.getElementById('spotlightPlayerSelect').addEventListener('change', () => updateSpotlightChart(playerPerformanceHistory));
+            document.getElementById('closeGeminiModalBtn').addEventListener('click', hideGeminiModal);
+            document.getElementById('generateLeagueSummaryBtn').addEventListener('click', generateLeagueSummary);
         });
     </script>
 </body>
