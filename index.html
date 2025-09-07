@@ -838,7 +838,7 @@
             }
              const roundWinnerContainer = document.getElementById(`roundWinnerEmblem-${round.id.replace(/[^a-zA-Z0-9]/g, '-')}`);
             if (roundWinnerContainer && sortedPlayers.length > 0) {
-                const roundWinner = [...sortedPlayers].sort((a, b) => b.gameWinPercentage - a.gameWinPercentage)[0];
+                const roundWinner = [...sortedPlayers].sort((a, b) => b.matchWinPercentage - a.matchWinPercentage)[0];
                 roundWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Round Winner: ${roundWinner.name}</p>`;
             } else if (roundWinnerContainer) {
                 roundWinnerContainer.innerHTML = '';
@@ -1127,7 +1127,7 @@
 
             const leagueWinnerContainer = document.getElementById('leagueWinnerEmblem');
             if (leagueWinnerContainer && sortedPlayers.length > 0) {
-                 const leagueWinner = [...sortedPlayers].sort((a,b) => b.gameWinPercentage - a.gameWinPercentage)[0];
+                 const leagueWinner = [...sortedPlayers].sort((a,b) => b.matchWinPercentage - a.matchWinPercentage)[0];
                  leagueWinnerContainer.innerHTML = `<p class="text-amber-400 font-semibold">👑 Current League Leader: ${leagueWinner.name}</p>`;
             } else if (leagueWinnerContainer) {
                  leagueWinnerContainer.innerHTML = '';
