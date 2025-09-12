@@ -283,6 +283,7 @@
         let playerStats = {};
         let longestStreak = {};
         let mostImproved = {};
+        let savedSummaryHash = null;
 
         // Functions to show and hide the loading spinner
         const showLoadingSpinner = () => {
@@ -351,6 +352,19 @@
             modal.querySelector('div').classList.add('scale-95');
             modal.classList.add('hidden');
         };
+        
+        function showStaleSummaryWarning() {
+            const container = document.getElementById('leagueSummaryContainer');
+            const generateBtn = document.getElementById('generateLeagueSummaryBtn');
+            if (container.querySelector('.stale-warning')) return;
+
+            const warning = document.createElement('p');
+            warning.className = 'stale-warning text-amber-400 text-xs mb-2 font-semibold';
+            warning.innerText = '💡 League data has changed. Generate a new summary for the latest insights.';
+            container.prepend(warning);
+            generateBtn.classList.add('animate-pulse', 'bg-amber-500');
+            generateBtn.classList.remove('bg-indigo-600');
+        }
         
         // ELO Calculation
         const K_FACTOR = 32;
@@ -715,11 +729,21 @@
                     });
 
                     onValue(ref(db, leagueSummaryPath), (snapshot) => {
-                        const summary = snapshot.val();
+                        const summaryData = snapshot.val();
                         const container = document.getElementById('leagueSummaryContainer');
-                        if (summary) {
-                            container.innerHTML = summary.replace(/\n/g, '<br>');
+                        const generateBtn = document.getElementById('generateLeagueSummaryBtn');
+
+                        // Clean up any stale indicators
+                        const existingWarning = container.querySelector('.stale-warning');
+                        if (existingWarning) existingWarning.remove();
+                        generateBtn.classList.remove('animate-pulse', 'bg-amber-500');
+                        generateBtn.classList.add('bg-indigo-600');
+
+                        if (summaryData && summaryData.text) {
+                            container.innerHTML = summaryData.text.replace(/\n/g, '<br>');
+                            savedSummaryHash = summaryData.dataHash;
                         } else {
+                            savedSummaryHash = null;
                             container.innerHTML = 'Click the button to generate an AI-powered summary of the current league standings.';
                         }
                     });
@@ -911,7 +935,7 @@
                     const playerBInput = createPlayerInput(round.id, matchIndex, 'playerB', match.playerB);
                     const deleteMatchBtn = createDeleteMatchButton(round.id, matchIndex);
                      const commentaryBtn = document.createElement('button');
-                    commentaryBtn.innerHTML = '✨';
+                     commentaryBtn.innerHTML = '✨';
                     commentaryBtn.className = 'text-2xl';
                     commentaryBtn.onclick = () => generateMatchCommentary(match, round.id);
                     playerAInput.classList.add('text-right');
@@ -1204,6 +1228,14 @@
                  renderStatCard('mostImprovedPlayerContainer');
             }
 
+            // --- Check if summary is stale ---
+            if (Object.keys(playerStats).length > 0) {
+                const currentDataHash = JSON.stringify(playerStats);
+                if (savedSummaryHash && savedSummaryHash !== currentDataHash) {
+                    showStaleSummaryWarning();
+                }
+            }
+
             // --- Render Rivalry & Spotlight---
             const allPlayerNames = Object.keys(playerStats);
             updateRivalryDropdowns(allPlayerNames);
@@ -1437,6 +1469,7 @@
 
         async function generateLeagueSummary() {
             const container = document.getElementById('leagueSummaryContainer');
+            const originalContent = container.innerHTML; // Save original content for error case
             container.innerHTML = '<div class="animate-pulse">Analyzing league data...</div>';
             
             const players = Object.values(playerStats).sort((a,b) => b.elo - a.elo);
@@ -1448,16 +1481,23 @@
             const top3 = players.slice(0,3).map((p,i) => `${i+1}. ${p.name} (ELO: ${Math.round(p.elo)})`).join(', ');
             const prompt = `You are a sharp sports analyst. Write a brief summary of a tennis league based on these stats: 
             - The top 3 players are: ${top3}.
-            - The player with the longest winning streak is ${longestStreak.player} with ${longestStreak.streak} wins.
-            - The most improved player recently is ${mostImproved.player}.
+            - The player with the longest winning streak is ${longestStreak.player} with a streak of ${longestStreak.streak} wins.
+            - The most improved player is ${mostImproved.player}.
             - Total players: ${players.length}.
             Keep it under 200 words. Highlight the leader and mention one or two others to watch out for.`;
-            const summary = await callGeminiAPI(prompt);
             
-            if (!summary.startsWith("Error")) {
-                await set(ref(db, leagueSummaryPath), summary);
+            const summaryText = await callGeminiAPI(prompt);
+            
+            if (!summaryText.startsWith("Error")) {
+                const currentDataHash = JSON.stringify(playerStats);
+                const summaryData = {
+                    text: summaryText,
+                    dataHash: currentDataHash
+                };
+                await set(ref(db, leagueSummaryPath), summaryData);
             } else {
-                 container.innerHTML = summary;
+                 showMessage(summaryText, 'error');
+                 container.innerHTML = originalContent; // Restore original content on error
             }
         }
 
@@ -1476,4 +1516,5 @@
     </script>
 </body>
 </html>
+
 
