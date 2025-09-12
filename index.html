@@ -1485,11 +1485,11 @@
             }
             
             const playerDataForPrompt = players.map(p => {
-                const form = p.matchHistory.slice(-5).join(', ');
+                const form = p.matchHistory.slice(-5).join(', ').replace(/W/g, 'Win').replace(/L/g, 'Loss');
                 return `- ${p.name}: Record (${p.wins}W-${p.losses}L), ELO: ${Math.round(p.elo)}, Recent Form: [${form || 'N/A'}]`;
             }).join('\n');
 
-            const prompt = `You are a fun, lighthearted, and witty sports commentator. Write a brief, exciting summary of a tennis league based on the following player data. For each player, give a short, fun comment on their performance instead of just listing their stats. Keep the whole summary under 250 words.
+            const prompt = `You are a fun, lighthearted, and witty sports commentator. Write a brief, exciting summary of a tennis league based on the following player data. For each player, give a short, fun comment on their performance instead of just listing their stats. Keep the whole summary under 250 words and present it as a single block of text.
 
 Here's the player data:
 ${playerDataForPrompt}
@@ -1512,10 +1512,19 @@ Some extra league-wide stats to weave in:
                     text: summaryText,
                     dataHash: currentDataHash
                 };
-                await set(ref(db, leagueSummaryPath), summaryData);
+                
+                try {
+                    await set(ref(db, leagueSummaryPath), summaryData);
+                    showMessage("New AI summary has been saved!", "success");
+                } catch (error) {
+                    console.error("Failed to save league summary:", error);
+                    showMessage("Error: Could not save the new summary to the database.", "error");
+                    container.innerHTML = originalContent;
+                }
+
             } else {
                  showMessage(summaryText, 'error');
-                 container.innerHTML = originalContent; // Restore original content on error
+                 container.innerHTML = originalContent; // Restore on generation error
             }
         }
 
