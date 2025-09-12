@@ -1230,7 +1230,13 @@
 
             // --- Check if summary is stale ---
             if (Object.keys(playerStats).length > 0) {
-                const currentDataHash = JSON.stringify(playerStats);
+                const sortedPlayerStatKeys = Object.keys(playerStats).sort();
+                const deterministicStats = {};
+                sortedPlayerStatKeys.forEach(key => {
+                    deterministicStats[key] = playerStats[key];
+                });
+                const currentDataHash = JSON.stringify(deterministicStats);
+                
                 if (savedSummaryHash && savedSummaryHash !== currentDataHash) {
                     showStaleSummaryWarning();
                 }
@@ -1478,18 +1484,30 @@
                  return;
             }
             
-            const top3 = players.slice(0,3).map((p,i) => `${i+1}. ${p.name} (ELO: ${Math.round(p.elo)})`).join(', ');
-            const prompt = `You are a sharp sports analyst. Write a brief summary of a tennis league based on these stats: 
-            - The top 3 players are: ${top3}.
-            - The player with the longest winning streak is ${longestStreak.player} with a streak of ${longestStreak.streak} wins.
-            - The most improved player is ${mostImproved.player}.
-            - Total players: ${players.length}.
-            Keep it under 200 words. Highlight the leader and mention one or two others to watch out for.`;
+            const playerDataForPrompt = players.map(p => {
+                const form = p.matchHistory.slice(-5).join(', ');
+                return `- ${p.name}: Record (${p.wins}W-${p.losses}L), ELO: ${Math.round(p.elo)}, Recent Form: [${form || 'N/A'}]`;
+            }).join('\n');
+
+            const prompt = `You are a fun, lighthearted, and witty sports commentator. Write a brief, exciting summary of a tennis league based on the following player data. For each player, give a short, fun comment on their performance instead of just listing their stats. Keep the whole summary under 250 words.
+
+Here's the player data:
+${playerDataForPrompt}
+
+Some extra league-wide stats to weave in:
+- Longest winning streak: ${longestStreak.player} with ${longestStreak.streak} wins.
+- Most improved player (based on game win %): ${mostImproved.player}.`;
             
             const summaryText = await callGeminiAPI(prompt);
             
             if (!summaryText.startsWith("Error")) {
-                const currentDataHash = JSON.stringify(playerStats);
+                const sortedPlayerStatKeys = Object.keys(playerStats).sort();
+                const deterministicStats = {};
+                sortedPlayerStatKeys.forEach(key => {
+                    deterministicStats[key] = playerStats[key];
+                });
+                const currentDataHash = JSON.stringify(deterministicStats);
+
                 const summaryData = {
                     text: summaryText,
                     dataHash: currentDataHash
