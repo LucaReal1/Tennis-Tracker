@@ -270,6 +270,8 @@
         // Use a simple, top-level key for Realtime Database.
         const databasePath = `artifacts/${sanitizedAppId}/public/data/tennisRounds`;
         const eloPath = `artifacts/${sanitizedAppId}/public/data/eloRatings`;
+        const leagueSummaryPath = `artifacts/${sanitizedAppId}/public/data/leagueSummary`;
+        const matchCommentariesPath = `artifacts/${sanitizedAppId}/public/data/matchCommentaries`;
 
         let db, auth, userId;
         let chartInstances = {};
@@ -712,6 +714,16 @@
                         hideLoadingSpinner();
                     });
 
+                    onValue(ref(db, leagueSummaryPath), (snapshot) => {
+                        const summary = snapshot.val();
+                        const container = document.getElementById('leagueSummaryContainer');
+                        if (summary) {
+                            container.innerHTML = summary.replace(/\n/g, '<br>');
+                        } else {
+                            container.innerHTML = 'Click the button to generate an AI-powered summary of the current league standings.';
+                        }
+                    });
+
                 } else {
                     try {
                         await signInAnonymously(auth);
@@ -901,7 +913,7 @@
                      const commentaryBtn = document.createElement('button');
                     commentaryBtn.innerHTML = '✨';
                     commentaryBtn.className = 'text-2xl';
-                    commentaryBtn.onclick = () => generateMatchCommentary(match);
+                    commentaryBtn.onclick = () => generateMatchCommentary(match, round.id);
                     playerAInput.classList.add('text-right');
                     matchRow.append(playerAInput, scoreAInput, vsSpan, scoreBInput, playerBInput, commentaryBtn, deleteMatchBtn);
                     matchesContainer.appendChild(matchRow);
@@ -1396,15 +1408,30 @@
             modal.classList.add('hidden');
         }
         
-        async function generateMatchCommentary(match) {
+        async function generateMatchCommentary(match, roundId) {
             if (match.scoreA === 0 && match.scoreB === 0) {
                 showMessage("Enter a score before generating commentary.", "error");
                 return;
             }
+
+            const matchId = btoa(`${match.playerA}-${match.playerB}-${roundId}-${match.scoreA}-${match.scoreB}`);
+            const commentaryRef = ref(db, `${matchCommentariesPath}/${matchId}`);
+            
+            const snapshot = await get(commentaryRef);
+            if (snapshot.exists()) {
+                const savedCommentary = snapshot.val();
+                showGeminiModal(`✨ Match Commentary: ${match.playerA} vs ${match.playerB}`, savedCommentary);
+                return;
+            }
+
             showGeminiModal("✨ Generating Match Commentary...", '<div class="animate-pulse">Fetching expert analysis...</div>');
             const winner = match.scoreA > match.scoreB ? match.playerA : match.playerB;
             const prompt = `You are an enthusiastic tennis commentator. Write a brief, exciting, play-by-play summary for a tennis match between ${match.playerA} and ${match.playerB}. The final score was ${match.scoreA} to ${match.scoreB}, with ${winner} winning the match. Keep it under 150 words.`;
             const commentary = await callGeminiAPI(prompt);
+
+            if (!commentary.startsWith("Error")) {
+                await set(commentaryRef, commentary);
+            }
             showGeminiModal(`✨ Match Commentary: ${match.playerA} vs ${match.playerB}`, commentary);
         }
 
@@ -1426,7 +1453,12 @@
             - Total players: ${players.length}.
             Keep it under 200 words. Highlight the leader and mention one or two others to watch out for.`;
             const summary = await callGeminiAPI(prompt);
-            container.innerHTML = summary.replace(/\n/g, '<br>');
+            
+            if (!summary.startsWith("Error")) {
+                await set(ref(db, leagueSummaryPath), summary);
+            } else {
+                 container.innerHTML = summary;
+            }
         }
 
 
